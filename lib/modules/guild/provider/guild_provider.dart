@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../model/guild.dart';
-import '../model/guild_donation.dart';
 import '../model/guild_member.dart';
 import '../service/guild_service.dart';
 
@@ -19,7 +18,6 @@ class GuildProvider extends ChangeNotifier {
   List<Guild> guilds = [];
   Guild? guildDetail;
   List<GuildMember> members = [];
-  List<GuildDonation> donations = [];
 
   Future<void> loadGuilds() async {
     try {
@@ -42,15 +40,13 @@ class GuildProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      final results = await Future.wait([
-        guildService.getGuildDetail(guildId),
-        guildService.getGuildMembers(guildId),
-        guildService.getGuildDonations(guildId),
-      ]);
+      guildDetail = await guildService.getGuildDetail(guildId);
 
-      guildDetail = results[0] as Guild;
-      members = results[1] as List<GuildMember>;
-      donations = results[2] as List<GuildDonation>;
+      try {
+        members = await guildService.getGuildMembers(guildId);
+      } catch (_) {
+        members = [];
+      }
     } catch (error) {
       errorMessage = error.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -74,6 +70,7 @@ class GuildProvider extends ChangeNotifier {
         slug: slug,
         description: description,
       );
+
       return true;
     } catch (error) {
       errorMessage = error.toString().replaceFirst('Exception: ', '');
@@ -101,33 +98,10 @@ class GuildProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> donateGuild({
-    required int guildId,
-    required int contributionPoints,
-  }) async {
-    try {
-      isSubmitting = true;
-      errorMessage = null;
-      notifyListeners();
-
-      await guildService.donateGuild(
-        guildId: guildId,
-        contributionPoints: contributionPoints,
-      );
-      return true;
-    } catch (error) {
-      errorMessage = error.toString().replaceFirst('Exception: ', '');
-      return false;
-    } finally {
-      isSubmitting = false;
-      notifyListeners();
-    }
-  }
-
   void clearDetail() {
     guildDetail = null;
     members = [];
-    donations = [];
+    errorMessage = null;
     notifyListeners();
   }
 }

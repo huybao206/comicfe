@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../auth/provider/auth_provider.dart';
 import '../provider/user_provider.dart';
 import '../widgets/profile_action_grid.dart';
 import '../widgets/profile_header.dart';
@@ -42,9 +43,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _handleLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF15110C),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF8B6A2B), width: 1.2),
+          ),
+          title: const Text(
+            'Đăng xuất',
+            style: TextStyle(
+              color: Color(0xFFF6E7BE),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: const Text(
+            'Bạn có chắc muốn đăng xuất khỏi tài khoản này không?',
+            style: TextStyle(
+              color: Color(0xFFE8D7B3),
+              height: 1.45,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(
+                'Hủy',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFC7962F),
+                foregroundColor: const Color(0xFF24170B),
+              ),
+              child: const Text(
+                'Đăng xuất',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+    if (!mounted) return;
+
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.logout();
+
+    if (!mounted) return;
+
+    if (authProvider.errorMessage != null &&
+        authProvider.errorMessage!.trim().isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF7A2E2E),
+          content: Text(authProvider.errorMessage!),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Color(0xFF2F6B3B),
+        content: Text('Đã đăng xuất'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<UserProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final profile = provider.profile;
 
     return Scaffold(
@@ -151,15 +228,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 18),
               OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Bạn có thể nối logout tại đây'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text('Đăng xuất'),
+                onPressed: authProvider.isLoading ? null : _handleLogout,
+                icon: authProvider.isLoading
+                    ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFFFFC9C9),
+                  ),
+                )
+                    : const Icon(Icons.logout_rounded),
+                label: Text(authProvider.isLoading ? 'Đang đăng xuất...' : 'Đăng xuất'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFFFC9C9),
                   side: const BorderSide(color: Color(0xFF7A2E2E)),

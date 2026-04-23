@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../modules/comic/screens/comic_list_screen.dart';
 import '../modules/economy/shop/screen/shop_screen.dart';
 import '../modules/game/afk/screen/afk_screen.dart';
-import '../modules/guild/screens/guild_detail_screen.dart';
+import '../modules/guild/screens/guild_screen.dart';
 import '../modules/notification/provider/notification_provider.dart';
 import '../modules/notification/screens/notification_screen.dart';
 import '../modules/ranking/screens/ranking_screen.dart';

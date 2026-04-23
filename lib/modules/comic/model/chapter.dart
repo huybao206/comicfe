@@ -1,3 +1,5 @@
+import '../../../core/config/app_env.dart';
+
 class ChapterImage {
   final int id;
   final String imageUrl;
@@ -10,11 +12,33 @@ class ChapterImage {
   });
 
   factory ChapterImage.fromMap(Map<String, dynamic> map) {
+    final rawImageUrl =
+    (map['image_url'] ?? map['imageUrl'] ?? '').toString();
+
     return ChapterImage(
       id: int.tryParse('${map['id']}') ?? 0,
-      imageUrl: (map['image_url'] ?? map['imageUrl'] ?? '').toString(),
-      displayOrder: int.tryParse('${map['display_order'] ?? map['displayOrder']}') ?? 0,
+      imageUrl: _buildFullImageUrl(rawImageUrl),
+      displayOrder:
+      int.tryParse('${map['display_order'] ?? map['displayOrder']}') ?? 0,
     );
+  }
+
+  static String _buildFullImageUrl(String raw) {
+    if (raw.trim().isEmpty) return '';
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw;
+    }
+
+    final normalized = raw.replaceAll('\\', '/');
+
+    final mediaBaseUrl = AppEnv.baseUrl.replaceFirst('/api', '');
+
+    if (normalized.startsWith('/')) {
+      return '$mediaBaseUrl$normalized';
+    }
+
+    return '$mediaBaseUrl/$normalized';
   }
 }
 
@@ -51,11 +75,16 @@ class Chapter {
     return Chapter(
       id: int.tryParse('${map['id']}') ?? 0,
       comicId: int.tryParse('${map['comic_id'] ?? map['comicId']}') ?? 0,
-      chapterNumber: double.tryParse('${map['chapter_number'] ?? map['chapterNumber']}') ?? 0,
+      chapterNumber: double.tryParse(
+        '${map['chapter_number'] ?? map['chapterNumber']}',
+      ) ??
+          0,
       title: (map['title'] ?? '').toString(),
       slug: (map['slug'] ?? '').toString(),
-      accessType: (map['access_type'] ?? map['accessType'] ?? 'free').toString(),
-      publishStatus: (map['publish_status'] ?? map['publishStatus'] ?? '').toString(),
+      accessType:
+      (map['access_type'] ?? map['accessType'] ?? 'free').toString(),
+      publishStatus:
+      (map['publish_status'] ?? map['publishStatus'] ?? '').toString(),
       viewCount: int.tryParse('${map['view_count'] ?? map['viewCount']}') ?? 0,
       comicTitle: map['comic_title']?.toString(),
       releasedAt: map['released_at']?.toString(),

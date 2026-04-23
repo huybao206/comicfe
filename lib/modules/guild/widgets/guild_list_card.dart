@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../model/guild.dart';
+import '../screens/guild_detail_screen.dart';
 import '../screens/guild_screen.dart';
 import 'guild_info_chip.dart';
 

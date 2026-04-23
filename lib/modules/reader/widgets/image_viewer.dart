@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ImageViewer extends StatelessWidget {
@@ -10,6 +11,8 @@ class ImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Reader imageUrl: $imageUrl');
+
     return InteractiveViewer(
       minScale: 1,
       maxScale: 4,
@@ -17,7 +20,10 @@ class ImageViewer extends StatelessWidget {
         imageUrl,
         width: double.infinity,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, error, stackTrace) {
+          debugPrint('Image load failed: $imageUrl');
+          debugPrint('Error: $error');
+
           return Container(
             height: 260,
             alignment: Alignment.center,

@@ -19,8 +19,8 @@ class AuthService {
     final data = await apiClient.post(
       ApiPaths.login,
       data: {
-        'identifier': identifier,
-        'password': password,
+        'identifier': identifier.trim(),
+        'password': password.trim(),
       },
     );
 
@@ -50,13 +50,21 @@ class AuthService {
     required String displayName,
     required String password,
   }) async {
+    if (username.trim().length < 6) {
+      throw Exception('Username phải từ 6 ký tự trở lên');
+    }
+
+    if (password.trim().length < 6) {
+      throw Exception('Mật khẩu phải từ 6 ký tự trở lên');
+    }
+
     await apiClient.post(
       ApiPaths.register,
       data: {
-        'username': username,
-        'email': email,
-        'displayName': displayName,
-        'password': password,
+        'username': username.trim(),
+        'email': email.trim(),
+        'displayName': displayName.trim(),
+        'password': password.trim(),
       },
     );
   }

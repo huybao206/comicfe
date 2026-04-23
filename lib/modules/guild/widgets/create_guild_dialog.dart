@@ -11,8 +11,28 @@ Future<bool?> showCreateGuildDialog(BuildContext context) async {
   final result = await showDialog<bool>(
     context: context,
     builder: (dialogContext) {
-      return Consumer<GuildProvider>(
-        builder: (context, provider, _) {
+      bool isSubmitting = false;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          Future<void> submit() async {
+            if (isSubmitting) return;
+
+            setState(() {
+              isSubmitting = true;
+            });
+
+            final success = await context.read<GuildProvider>().createGuild(
+              name: nameController.text.trim(),
+              slug: slugController.text.trim(),
+              description: descController.text.trim(),
+            );
+
+            if (!dialogContext.mounted) return;
+
+            Navigator.of(dialogContext).pop(success);
+          }
+
           return AlertDialog(
             backgroundColor: const Color(0xFF15110C),
             shape: RoundedRectangleBorder(
@@ -49,33 +69,20 @@ Future<bool?> showCreateGuildDialog(BuildContext context) async {
             ),
             actions: [
               TextButton(
-                onPressed: provider.isSubmitting
-                    ? null
-                    : () => Navigator.of(dialogContext).pop(false),
+                onPressed:
+                isSubmitting ? null : () => Navigator.of(dialogContext).pop(false),
                 child: const Text(
                   'Hủy',
                   style: TextStyle(color: Colors.white70),
                 ),
               ),
               FilledButton(
-                onPressed: provider.isSubmitting
-                    ? null
-                    : () async {
-                  final success =
-                  await context.read<GuildProvider>().createGuild(
-                    name: nameController.text.trim(),
-                    slug: slugController.text.trim(),
-                    description: descController.text.trim(),
-                  );
-
-                  if (!dialogContext.mounted) return;
-                  Navigator.of(dialogContext).pop(success);
-                },
+                onPressed: isSubmitting ? null : submit,
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFC7962F),
                   foregroundColor: const Color(0xFF24170B),
                 ),
-                child: provider.isSubmitting
+                child: isSubmitting
                     ? const SizedBox(
                   width: 18,
                   height: 18,

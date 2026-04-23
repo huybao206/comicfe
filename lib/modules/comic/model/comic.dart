@@ -1,3 +1,5 @@
+import '../../../core/config/app_env.dart';
+
 class Comic {
   final int id;
   final String title;
@@ -38,8 +40,8 @@ class Comic {
       id: toInt(map['id']),
       title: (map['title'] ?? '').toString(),
       slug: (map['slug'] ?? '').toString(),
-      coverImageUrl: map['cover_image_url']?.toString(),
-      bannerImageUrl: map['banner_image_url']?.toString(),
+      coverImageUrl: _buildFullImageUrl(map['cover_image_url']?.toString()),
+      bannerImageUrl: _buildFullImageUrl(map['banner_image_url']?.toString()),
       summary: map['summary']?.toString(),
       authorName: map['author_name']?.toString(),
       publicationStatus: map['publication_status']?.toString(),
@@ -50,5 +52,22 @@ class Comic {
       totalFollows: toInt(map['total_follows']),
       genres: map['genres']?.toString(),
     );
+  }
+
+  static String? _buildFullImageUrl(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw;
+    }
+
+    final normalized = raw.replaceAll('\\', '/');
+    final mediaBaseUrl = AppEnv.baseUrl.replaceFirst('/api', '');
+
+    if (normalized.startsWith('/')) {
+      return '$mediaBaseUrl$normalized';
+    }
+
+    return '$mediaBaseUrl/$normalized';
   }
 }

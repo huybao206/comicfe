@@ -19,6 +19,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> bootstrap() async {
     try {
+      errorMessage = null;
       currentUser = await authService.getMe();
     } catch (_) {
       currentUser = null;
@@ -37,9 +38,32 @@ class AuthProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
+      final cleanIdentifier = identifier.trim();
+      final cleanPassword = password.trim();
+
+      if (cleanIdentifier.isEmpty) {
+        errorMessage = 'Vui lòng nhập email hoặc username';
+        return false;
+      }
+
+      if (!cleanIdentifier.contains('@') && cleanIdentifier.length < 6) {
+        errorMessage = 'Username phải từ 6 ký tự trở lên';
+        return false;
+      }
+
+      if (cleanPassword.isEmpty) {
+        errorMessage = 'Vui lòng nhập mật khẩu';
+        return false;
+      }
+
+      if (cleanPassword.length < 6) {
+        errorMessage = 'Mật khẩu phải từ 6 ký tự trở lên';
+        return false;
+      }
+
       currentUser = await authService.login(
-        identifier: identifier,
-        password: password,
+        identifier: cleanIdentifier,
+        password: cleanPassword,
       );
 
       return true;
@@ -63,11 +87,51 @@ class AuthProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
+      final cleanUsername = username.trim();
+      final cleanEmail = email.trim();
+      final cleanDisplayName = displayName.trim();
+      final cleanPassword = password.trim();
+
+      if (cleanUsername.isEmpty) {
+        errorMessage = 'Vui lòng nhập username';
+        return false;
+      }
+
+      if (cleanUsername.length < 6) {
+        errorMessage = 'Username phải từ 6 ký tự trở lên';
+        return false;
+      }
+
+      if (cleanEmail.isEmpty) {
+        errorMessage = 'Vui lòng nhập email';
+        return false;
+      }
+
+      if (!cleanEmail.contains('@') || !cleanEmail.contains('.')) {
+        errorMessage = 'Email không hợp lệ';
+        return false;
+      }
+
+      if (cleanDisplayName.isEmpty) {
+        errorMessage = 'Vui lòng nhập tên hiển thị';
+        return false;
+      }
+
+      if (cleanPassword.isEmpty) {
+        errorMessage = 'Vui lòng nhập mật khẩu';
+        return false;
+      }
+
+      if (cleanPassword.length < 6) {
+        errorMessage = 'Mật khẩu phải từ 6 ký tự trở lên';
+        return false;
+      }
+
       await authService.register(
-        username: username,
-        email: email,
-        displayName: displayName,
-        password: password,
+        username: cleanUsername,
+        email: cleanEmail,
+        displayName: cleanDisplayName,
+        password: cleanPassword,
       );
 
       return true;
@@ -81,13 +145,18 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    isLoading = true;
-    notifyListeners();
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
 
-    await authService.logout();
-    currentUser = null;
-
-    isLoading = false;
-    notifyListeners();
+      await authService.logout();
+    } catch (error) {
+      errorMessage = error.toString().replaceFirst('Exception: ', '');
+    } finally {
+      currentUser = null;
+      isLoading = false;
+      notifyListeners();
+    }
   }
 }
