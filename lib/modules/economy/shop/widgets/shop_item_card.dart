@@ -7,118 +7,119 @@ class ShopItemCard extends StatelessWidget {
     super.key,
     required this.item,
     required this.isBuying,
-    required this.onBuy,
+    required this.onTap,
   });
 
   final ShopItem item;
   final bool isBuying;
-  final VoidCallback onBuy;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF17110C),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF735624)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.22),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF17110C),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFF735624)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.22),
+                blurRadius: 14,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ItemImage(iconUrl: item.iconUrl),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.itemName,
-                    style: const TextStyle(
-                      color: Color(0xFFF6E7BE),
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.description?.trim().isNotEmpty == true
-                        ? item.description!
-                        : 'Một bảo vật quý hiếm dành cho hành giả trên con đường tu tiên.',
-                    style: const TextStyle(
-                      color: Color(0xFFD5C6A2),
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ItemImage(iconUrl: item.iconUrl),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _infoChip(
-                        icon: Icons.monetization_on_outlined,
-                        text: '${item.priceGold} vàng',
-                      ),
-                      _infoChip(
-                        icon: Icons.diamond_outlined,
-                        text: '${item.pricePremium} ngọc',
-                      ),
-                      if (item.rarity != null && item.rarity!.trim().isNotEmpty)
-                        _infoChip(
-                          icon: Icons.stars_rounded,
-                          text: item.rarity!,
+                      Text(
+                        item.itemName,
+                        style: const TextStyle(
+                          color: Color(0xFFF6E7BE),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
                         ),
-                      if (item.vipRequiredLevel != null)
-                        _infoChip(
-                          icon: Icons.workspace_premium_outlined,
-                          text: 'VIP ${item.vipRequiredLevel}+',
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        item.description?.trim().isNotEmpty == true
+                            ? item.description!
+                            : 'Một bảo vật quý hiếm dành cho hành giả trên con đường tu tiên.',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFD5C6A2),
+                          height: 1.5,
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _infoChip(
+                            icon: Icons.monetization_on_outlined,
+                            text: '${item.priceGold} vàng',
+                          ),
+                          _infoChip(
+                            icon: Icons.diamond_outlined,
+                            text: '${item.pricePremium} ngọc',
+                          ),
+                          if (item.rarity != null &&
+                              item.rarity!.trim().isNotEmpty)
+                            _infoChip(
+                              icon: Icons.stars_rounded,
+                              text: item.rarity!,
+                            ),
+                          _infoChip(
+                            icon: Icons.workspace_premium_outlined,
+                            text: 'VIP ${item.vipRequiredLevel ?? 0}+',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: FilledButton.icon(
+                          onPressed: onTap,
+                          icon: const Icon(Icons.visibility_outlined, size: 17),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFC7962F),
+                            foregroundColor: const Color(0xFF24170B),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          label: const Text(
+                            'Xem chi tiết',
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton(
-                      onPressed: isBuying ? null : onBuy,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFC7962F),
-                        foregroundColor: const Color(0xFF24170B),
-                        disabledBackgroundColor: Colors.grey,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: isBuying
-                          ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF24170B),
-                        ),
-                      )
-                          : const Text(
-                        'Thu nhận',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

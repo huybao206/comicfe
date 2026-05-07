@@ -16,17 +16,24 @@ class NotificationService {
       rawList = response;
     } else if (response is Map && response['data'] is List) {
       rawList = response['data'];
+    } else if (response is Map && response['items'] is List) {
+      rawList = response['items'];
+    } else if (response is Map && response['notifications'] is List) {
+      rawList = response['notifications'];
     }
 
     return rawList
-        .map((e) => NotificationItem.fromMap(
-      Map<String, dynamic>.from(e),
-    ))
+        .whereType<Map>()
+        .map(
+          (e) => NotificationItem.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
         .toList();
   }
 
   Future<void> markAsRead(int notificationId) async {
-    await apiClient.post(
+    await apiClient.patch(
       ApiPaths.markNotificationRead(notificationId),
     );
   }

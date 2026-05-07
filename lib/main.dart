@@ -35,6 +35,9 @@ import 'modules/vip/service/vip_service.dart';
 import 'modules/chat/provider/chat_provider.dart';
 import 'modules/chat/service/chat_service.dart';
 
+import 'modules/comment/provider/comment_provider.dart';
+import 'modules/comment/service/comment_service.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -101,6 +104,11 @@ void main() {
             apiClient: context.read<ApiClient>(),
           ),
         ),
+        Provider<CommentService>(
+          create: (context) => CommentService(
+            apiClient: context.read<ApiClient>(),
+          ),
+        ),
 
         ChangeNotifierProvider<AuthProvider>(
           create: (context) => AuthProvider(
@@ -150,6 +158,11 @@ void main() {
         ChangeNotifierProvider<ChatProvider>(
           create: (context) => ChatProvider(
             chatService: context.read<ChatService>(),
+          ),
+        ),
+        ChangeNotifierProvider<CommentProvider>(
+          create: (context) => CommentProvider(
+            commentService: context.read<CommentService>(),
           ),
         ),
       ],

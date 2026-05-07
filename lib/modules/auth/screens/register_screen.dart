@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter/services.dart';
 import '../provider/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -41,6 +41,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (text.length < 6) {
       return 'Username phải từ 6 ký tự trở lên';
+    }
+
+    final regex = RegExp(r'^[a-z0-9_]+$');
+
+    if (!regex.hasMatch(text)) {
+      return 'Username chỉ được chữ thường, số và dấu _';
     }
 
     return null;
@@ -116,7 +122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFF2F6B3B),
-          content: Text('Đăng ký thành công'),
+          content: Text('Đăng ký thành công, đang vào app'),
         ),
       );
       Navigator.of(context).pop();
@@ -207,7 +213,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextFormField(
                       controller: _usernameController,
                       validator: _validateUsername,
+                      textInputAction: TextInputAction.next,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9_]')),
+                      ],
                       style: const TextStyle(color: Colors.white),
+                      onChanged: (value) {
+                        final lower = value.toLowerCase();
+
+                        if (value != lower) {
+                          _usernameController.value = TextEditingValue(
+                            text: lower,
+                            selection: TextSelection.collapsed(offset: lower.length),
+                          );
+                        }
+                      },
                       decoration: InputDecoration(
                         labelText: 'Username',
                         labelStyle: const TextStyle(color: Color(0xFFD8C08A)),
@@ -217,25 +237,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Icons.person_outline_rounded,
                           color: Color(0xFFE0B85C),
                         ),
+                        helperText: 'Tối thiểu 6 ký tự, chỉ dùng a-z, 0-9 và _',
+                        helperStyle: const TextStyle(color: Color(0xFFB89E70)),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide:
-                          const BorderSide(color: Color(0xFF6E5423)),
+                          borderSide: const BorderSide(color: Color(0xFF6E5423)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide:
-                          const BorderSide(color: Color(0xFFE0B85C)),
+                          borderSide: const BorderSide(color: Color(0xFFE0B85C)),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide:
-                          const BorderSide(color: Color(0xFFE64545)),
+                          borderSide: const BorderSide(color: Color(0xFFE64545)),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide:
-                          const BorderSide(color: Color(0xFFE64545)),
+                          borderSide: const BorderSide(color: Color(0xFFE64545)),
                         ),
                       ),
                     ),

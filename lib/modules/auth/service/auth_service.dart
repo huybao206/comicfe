@@ -33,9 +33,11 @@ class AuthService {
     if (accessToken.isNotEmpty) {
       await tokenStorage.saveAccessToken(accessToken);
     }
+
     if (refreshToken.isNotEmpty) {
       await tokenStorage.saveRefreshToken(refreshToken);
     }
+
     if (sessionToken.isNotEmpty) {
       await tokenStorage.saveSessionToken(sessionToken);
     }
@@ -44,28 +46,45 @@ class AuthService {
     return AuthUser.fromMap(userMap);
   }
 
-  Future<void> register({
+  Future<AuthUser> register({
     required String username,
     required String email,
     required String displayName,
     required String password,
   }) async {
-    if (username.trim().length < 6) {
+    final cleanUsername = username.trim().toLowerCase();
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanDisplayName = displayName.trim();
+    final cleanPassword = password.trim();
+
+    if (cleanUsername.length < 6) {
       throw Exception('Username phải từ 6 ký tự trở lên');
     }
 
-    if (password.trim().length < 6) {
+    final usernameRegex = RegExp(r'^[a-z0-9_]+$');
+    if (!usernameRegex.hasMatch(cleanUsername)) {
+      throw Exception('Username chỉ được chữ thường, số và dấu _');
+    }
+
+    if (cleanPassword.length < 6) {
       throw Exception('Mật khẩu phải từ 6 ký tự trở lên');
     }
 
     await apiClient.post(
       ApiPaths.register,
       data: {
-        'username': username.trim(),
-        'email': email.trim(),
-        'displayName': displayName.trim(),
-        'password': password.trim(),
+        'username': cleanUsername,
+        'email': cleanEmail,
+        'displayName': cleanDisplayName,
+        'password': cleanPassword,
       },
+    );
+
+    // BE register hiện chỉ trả userId/verifyToken, chưa trả accessToken.
+    // Vì vậy sau khi đăng ký thành công, FE tự login luôn để lấy token.
+    return login(
+      identifier: cleanUsername,
+      password: cleanPassword,
     );
   }
 
@@ -77,6 +96,7 @@ class AuthService {
   Future<void> logout() async {
     try {
       final sessionToken = await tokenStorage.getSessionToken();
+
       if (sessionToken != null && sessionToken.isNotEmpty) {
         await apiClient.post(
           ApiPaths.logout,
@@ -86,6 +106,7 @@ class AuthService {
         );
       }
     } catch (_) {
+      // Vẫn clear token local dù BE logout lỗi.
     } finally {
       await tokenStorage.clear();
     }

@@ -10,15 +10,39 @@ class UserService {
   final ApiClient apiClient;
 
   Future<UserProfile> getMyProfile() async {
-    final data = await apiClient.get(ApiPaths.me);
-    return UserProfile.fromMap(Map<String, dynamic>.from(data as Map));
+    try {
+      final data = await apiClient.get(ApiPaths.myProfile);
+
+      return UserProfile.fromMap(
+        Map<String, dynamic>.from(data as Map),
+      );
+    } catch (_) {
+      // Nếu /profile/me lỗi do BE/DB, vẫn lấy user cơ bản từ /auth/me
+      // để màn Tôi không bị trống.
+      final fallbackData = await apiClient.get(ApiPaths.me);
+
+      return UserProfile.fromMap(
+        Map<String, dynamic>.from(fallbackData as Map),
+      );
+    }
   }
 
-  Future<void> updateProfile({
+  Future<UserProfile> updateProfile({
     required String displayName,
+    String? bio,
+    String? avatarUrl,
   }) async {
-    throw UnimplementedError(
-      'Backend chưa có API update profile cho app user',
+    final data = await apiClient.put(
+      ApiPaths.updateMyProfile,
+      data: {
+        'display_name': displayName.trim(),
+        if (bio != null) 'bio': bio.trim(),
+        if (avatarUrl != null) 'avatar_url': avatarUrl.trim(),
+      },
+    );
+
+    return UserProfile.fromMap(
+      Map<String, dynamic>.from(data as Map),
     );
   }
 }

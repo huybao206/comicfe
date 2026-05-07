@@ -11,7 +11,9 @@ class UserProvider extends ChangeNotifier {
   final UserService userService;
 
   bool isLoading = false;
+  bool isUpdating = false;
   String? errorMessage;
+
   UserProfile? profile;
 
   Future<void> loadMyProfile() async {
@@ -31,23 +33,34 @@ class UserProvider extends ChangeNotifier {
 
   Future<bool> updateProfile({
     required String displayName,
+    String? bio,
+    String? avatarUrl,
   }) async {
+    final cleanDisplayName = displayName.trim();
+
+    if (cleanDisplayName.isEmpty) {
+      errorMessage = 'Tên hiển thị không được để trống';
+      notifyListeners();
+      return false;
+    }
+
     try {
-      isLoading = true;
+      isUpdating = true;
       errorMessage = null;
       notifyListeners();
 
-      await userService.updateProfile(
-        displayName: displayName,
+      profile = await userService.updateProfile(
+        displayName: cleanDisplayName,
+        bio: bio,
+        avatarUrl: avatarUrl,
       );
 
-      await loadMyProfile();
       return true;
     } catch (error) {
       errorMessage = error.toString().replaceFirst('Exception: ', '');
       return false;
     } finally {
-      isLoading = false;
+      isUpdating = false;
       notifyListeners();
     }
   }

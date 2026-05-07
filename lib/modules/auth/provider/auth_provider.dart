@@ -87,8 +87,8 @@ class AuthProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      final cleanUsername = username.trim();
-      final cleanEmail = email.trim();
+      final cleanUsername = username.trim().toLowerCase();
+      final cleanEmail = email.trim().toLowerCase();
       final cleanDisplayName = displayName.trim();
       final cleanPassword = password.trim();
 
@@ -99,6 +99,13 @@ class AuthProvider extends ChangeNotifier {
 
       if (cleanUsername.length < 6) {
         errorMessage = 'Username phải từ 6 ký tự trở lên';
+        return false;
+      }
+
+      final usernameRegex = RegExp(r'^[a-z0-9_]+$');
+
+      if (!usernameRegex.hasMatch(cleanUsername)) {
+        errorMessage = 'Username chỉ được chữ thường, số và dấu _';
         return false;
       }
 
@@ -127,7 +134,9 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
-      await authService.register(
+      // Điểm quan trọng:
+      // authService.register sẽ đăng ký xong rồi tự login luôn.
+      currentUser = await authService.register(
         username: cleanUsername,
         email: cleanEmail,
         displayName: cleanDisplayName,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../comment/widgets/comic_comment_section.dart';
 import '../../reader/screens/reader_screen.dart';
 import '../provider/comic_provider.dart';
 
@@ -20,6 +21,7 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
       context.read<ComicProvider>().loadComicDetail(widget.comicId);
     });
@@ -39,10 +41,10 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
         ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(
           ok
-              ? (isFollowing
+              ? isFollowing
               ? 'Đã thêm truyện vào danh sách theo dõi'
-              : 'Đã bỏ theo dõi truyện')
-              : (provider.errorMessage ?? 'Không thể cập nhật theo dõi'),
+              : 'Đã bỏ theo dõi truyện'
+              : provider.errorMessage ?? 'Không thể cập nhật theo dõi',
         ),
       ),
     );
@@ -57,7 +59,10 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
       appBar: AppBar(
         title: const Text(
           'Truyện',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFF070B14),
@@ -102,7 +107,9 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
               const SizedBox(height: 16),
               _chapterBlock(context, provider),
               const SizedBox(height: 16),
-              _commentBlock(),
+
+              // Đã thay comment fake bằng comment thật từ BE.
+              ComicCommentSection(comicId: widget.comicId),
             ],
           );
         },
@@ -412,45 +419,6 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
     );
   }
 
-  Widget _commentBlock() {
-    return _darkCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle('Bình luận'),
-          const SizedBox(height: 12),
-          Container(
-            height: 86,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1B2340),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF283251)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Viết bình luận...',
-                    style: TextStyle(color: Colors.white.withOpacity(0.45)),
-                  ),
-                ),
-                const Icon(Icons.send_rounded, color: Color(0xFF8FB0FF)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          _fakeComment('Loy', 'Chapter 25', 'Cốt ổn, nhân vật chính khá cuốn.'),
-          _fakeComment(
-            'Loy',
-            'Chapter 24',
-            'Truyện thuộc kiểu tu tiên đọc khá ổn.',
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _darkCard({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -510,53 +478,6 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _fakeComment(String name, String chapter, String content) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircleAvatar(
-            radius: 17,
-            backgroundColor: Color(0xFF6574FF),
-            child: Icon(Icons.person, size: 17, color: Colors.white),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF151B2D),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$name • $chapter',
-                    style: const TextStyle(
-                      color: Color(0xFFBFD0FF),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    content,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.68),
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ],
               ),
             ),
           ),

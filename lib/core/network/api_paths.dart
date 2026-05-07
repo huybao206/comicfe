@@ -5,9 +5,16 @@ class ApiPaths {
   static const String me = '/auth/me';
   static const String logout = '/auth/logout';
 
+  // Profile
+  static const String myProfile = '/profile/me';
+  static const String updateMyProfile = '/profile/me';
+  static const String myReadingHistory = '/profile/me/reading-history';
+  static const String myFollowedComics = '/profile/me/follows';
+
   // Comics
   static const String comics = '/comics';
   static String comicDetail(int id) => '/comics/$id';
+  static String followComic(int id) => '/comics/$id/follow';
   static String chaptersByComic(int comicId) => '/chapters/comic/$comicId';
   static String chapterDetail(int chapterId) => '/chapters/$chapterId';
 
@@ -46,8 +53,15 @@ class ApiPaths {
   static const String vipFeatures = '/vip/features';
   static const String vipMe = '/vip/me';
 
-  // TODO API
+  // Comments
   static const String comments = '/comments';
+  static String comicComments(int comicId) => '/comments/comic/$comicId';
+  static String chapterComments(int chapterId) => '/comments/chapter/$chapterId';
+  static String updateComment(int id) => '/comments/$id';
+  static String deleteComment(int id) => '/comments/$id';
+
+  // TODO API
+
   static const String missions = '/missions';
   static const String checkin = '/checkin';
   static const String inventory = '/inventory';

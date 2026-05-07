@@ -22,9 +22,11 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await tokenStorage.getAccessToken();
+
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+
           handler.next(options);
         },
       ),
@@ -79,6 +81,7 @@ class ApiClient {
         path,
         queryParameters: queryParameters,
       );
+
       final body = _toMap(response.data);
       return _unwrapResponse(body);
     } catch (error) {
@@ -97,6 +100,26 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
       );
+
+      final body = _toMap(response.data);
+      return _unwrapResponse(body);
+    } catch (error) {
+      throw Exception(_extractMessage(error));
+    }
+  }
+
+  Future<dynamic> put(
+      String path, {
+        dynamic data,
+        Map<String, dynamic>? queryParameters,
+      }) async {
+    try {
+      final response = await dio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+      );
+
       final body = _toMap(response.data);
       return _unwrapResponse(body);
     } catch (error) {
@@ -115,6 +138,7 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
       );
+
       final body = _toMap(response.data);
       return _unwrapResponse(body);
     } catch (error) {
@@ -133,6 +157,7 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
       );
+
       final body = _toMap(response.data);
       return _unwrapResponse(body);
     } catch (error) {

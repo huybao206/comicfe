@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../model/shop_item.dart';
 import '../provider/shop_provider.dart';
-import '../widgets/buy_item_dialog.dart';
 import '../widgets/shop_empty_view.dart';
 import '../widgets/shop_header.dart';
 import '../widgets/shop_item_card.dart';
+import 'shop_item_detail_screen.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -19,39 +19,22 @@ class _ShopScreenState extends State<ShopScreen> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
       context.read<ShopProvider>().loadShopItems();
     });
   }
 
-  Future<void> _handleBuy(ShopItem item) async {
-    final quantity = await showBuyItemDialog(context, item);
-
-    if (quantity == null) return;
-
-    final ok = await context.read<ShopProvider>().buyItem(
-      item.id,
-      quantity: quantity,
+  Future<void> _openDetail(ShopItem item) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ShopItemDetailScreen(item: item),
+      ),
     );
 
     if (!mounted) return;
 
-    final provider = context.read<ShopProvider>();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(
-          ok
-              ? 'Mua thành công ${item.itemName}'
-              : (provider.errorMessage ?? 'Mua thất bại'),
-        ),
-      ),
-    );
-
-    if (ok) {
-      context.read<ShopProvider>().loadShopItems();
-    }
+    context.read<ShopProvider>().loadShopItems();
   }
 
   @override
@@ -60,20 +43,6 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0A07),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0A07),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Tiên Các Bảo Khố',
-          style: TextStyle(
-            color: Color(0xFFF6E7BE),
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.6,
-          ),
-        ),
-      ),
       body: RefreshIndicator(
         color: const Color(0xFFC7962F),
         backgroundColor: const Color(0xFF1A130D),
@@ -81,6 +50,22 @@ class _ShopScreenState extends State<ShopScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: Center(
+                  child: Text(
+                    'Tiên Các Bảo Khố',
+                    style: TextStyle(
+                      color: Color(0xFFF6E7BE),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             const SliverToBoxAdapter(
               child: ShopHeader(),
             ),
@@ -122,10 +107,11 @@ class _ShopScreenState extends State<ShopScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final item = shopProvider.items[index];
+
                       return ShopItemCard(
                         item: item,
                         isBuying: shopProvider.isBuying,
-                        onBuy: () => _handleBuy(item),
+                        onTap: () => _openDetail(item),
                       );
                     },
                   ),

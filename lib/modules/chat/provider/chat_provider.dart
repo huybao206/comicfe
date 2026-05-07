@@ -40,6 +40,7 @@ class ChatProvider extends ChangeNotifier {
       selectedRoom = room;
       isLoadingMessages = true;
       errorMessage = null;
+      messages = [];
       notifyListeners();
 
       messages = await chatService.getMessages(room.id);
@@ -53,6 +54,7 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> refreshMessages() async {
     if (selectedRoom == null) return;
+
     try {
       isLoadingMessages = true;
       errorMessage = null;
@@ -68,24 +70,37 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<bool> sendMessage(String content) async {
-    if (selectedRoom == null) return false;
-    if (content.trim().isEmpty) return false;
+    if (selectedRoom == null) {
+      errorMessage = 'Chưa chọn phòng chat';
+      notifyListeners();
+      return false;
+    }
+
+    final cleanContent = content.trim();
+
+    if (cleanContent.isEmpty) {
+      errorMessage = 'Vui lòng nhập tin nhắn';
+      notifyListeners();
+      return false;
+    }
+
+    if (cleanContent.length > 1000) {
+      errorMessage = 'Tin nhắn không được vượt quá 1000 ký tự';
+      notifyListeners();
+      return false;
+    }
 
     try {
       isSending = true;
       errorMessage = null;
       notifyListeners();
 
-      final sent = await chatService.sendMessage(
+      await chatService.sendMessage(
         roomId: selectedRoom!.id,
-        content: content.trim(),
+        content: cleanContent,
       );
 
-      if (sent != null) {
-        messages = [...messages, sent];
-      } else {
-        await refreshMessages();
-      }
+      messages = await chatService.getMessages(selectedRoom!.id);
 
       return true;
     } catch (error) {
@@ -100,6 +115,7 @@ class ChatProvider extends ChangeNotifier {
   void clearRoom() {
     selectedRoom = null;
     messages = [];
+    errorMessage = null;
     notifyListeners();
   }
 }
