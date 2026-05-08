@@ -37,15 +37,8 @@ class _GuildScreenState extends State<GuildScreen> {
           content: Text('Tạo guild thành công'),
         ),
       );
-      provider.loadGuilds();
-    } else if (provider.errorMessage != null &&
-        provider.errorMessage!.trim().isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF7A2E2E),
-          content: Text(provider.errorMessage!),
-        ),
-      );
+
+      await provider.loadGuilds();
     }
   }
 

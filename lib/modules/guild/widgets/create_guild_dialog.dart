@@ -3,111 +3,160 @@ import 'package:provider/provider.dart';
 
 import '../provider/guild_provider.dart';
 
-Future<bool?> showCreateGuildDialog(BuildContext context) async {
+Future<bool?> showCreateGuildDialog(BuildContext context) {
+  final guildProvider = context.read<GuildProvider>();
+
+  return showDialog<bool>(
+    context: context,
+    builder: (_) => _CreateGuildDialog(
+      guildProvider: guildProvider,
+    ),
+  );
+}
+
+class _CreateGuildDialog extends StatefulWidget {
+  const _CreateGuildDialog({
+    required this.guildProvider,
+  });
+
+  final GuildProvider guildProvider;
+
+  @override
+  State<_CreateGuildDialog> createState() => _CreateGuildDialogState();
+}
+
+class _CreateGuildDialogState extends State<_CreateGuildDialog> {
   final nameController = TextEditingController();
   final slugController = TextEditingController();
   final descController = TextEditingController();
 
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      bool isSubmitting = false;
+  bool isSubmitting = false;
+  String? errorText;
 
-      return StatefulBuilder(
-        builder: (context, setState) {
-          Future<void> submit() async {
-            if (isSubmitting) return;
+  @override
+  void dispose() {
+    nameController.dispose();
+    slugController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
 
-            setState(() {
-              isSubmitting = true;
-            });
+  Future<void> submit() async {
+    if (isSubmitting) return;
 
-            final success = await context.read<GuildProvider>().createGuild(
-              name: nameController.text.trim(),
-              slug: slugController.text.trim(),
-              description: descController.text.trim(),
-            );
+    final name = nameController.text.trim();
+    final slug = slugController.text.trim();
+    final description = descController.text.trim();
 
-            if (!dialogContext.mounted) return;
+    if (name.isEmpty || slug.isEmpty) {
+      setState(() {
+        errorText = 'Tên guild và slug là bắt buộc';
+      });
+      return;
+    }
 
-            Navigator.of(dialogContext).pop(success);
-          }
+    setState(() {
+      isSubmitting = true;
+      errorText = null;
+    });
 
-          return AlertDialog(
-            backgroundColor: const Color(0xFF15110C),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFF8B6A2B), width: 1.2),
+    try {
+      await widget.guildProvider.guildService.createGuild(
+        name: name,
+        slug: slug,
+        description: description,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        isSubmitting = false;
+        errorText = error.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF15110C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFF8B6A2B), width: 1.2),
+      ),
+      title: const Text(
+        'Tạo Guild',
+        style: TextStyle(
+          color: Color(0xFFF6E7BE),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _GuildInput(
+              controller: nameController,
+              label: 'Tên guild',
             ),
-            title: const Text(
-              'Tạo Guild',
-              style: TextStyle(
-                color: Color(0xFFF6E7BE),
-                fontWeight: FontWeight.w800,
-              ),
+            const SizedBox(height: 12),
+            _GuildInput(
+              controller: slugController,
+              label: 'Slug',
             ),
-            content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _GuildInput(
-                    controller: nameController,
-                    label: 'Tên guild',
-                  ),
-                  const SizedBox(height: 12),
-                  _GuildInput(
-                    controller: slugController,
-                    label: 'Slug',
-                  ),
-                  const SizedBox(height: 12),
-                  _GuildInput(
-                    controller: descController,
-                    label: 'Mô tả',
-                    maxLines: 3,
-                  ),
-                ],
-              ),
+            const SizedBox(height: 12),
+            _GuildInput(
+              controller: descController,
+              label: 'Mô tả',
+              maxLines: 3,
             ),
-            actions: [
-              TextButton(
-                onPressed:
-                isSubmitting ? null : () => Navigator.of(dialogContext).pop(false),
-                child: const Text(
-                  'Hủy',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              FilledButton(
-                onPressed: isSubmitting ? null : submit,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFC7962F),
-                  foregroundColor: const Color(0xFF24170B),
-                ),
-                child: isSubmitting
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF24170B),
-                  ),
-                )
-                    : const Text(
-                  'Tạo',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+            if (errorText != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                errorText!,
+                style: const TextStyle(
+                  color: Color(0xFFFFB4A9),
+                  fontSize: 13,
                 ),
               ),
             ],
-          );
-        },
-      );
-    },
-  );
-
-  nameController.dispose();
-  slugController.dispose();
-  descController.dispose();
-
-  return result;
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: isSubmitting ? null : () => Navigator.of(context).pop(false),
+          child: const Text(
+            'Hủy',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+        FilledButton(
+          onPressed: isSubmitting ? null : submit,
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFC7962F),
+            foregroundColor: const Color(0xFF24170B),
+          ),
+          child: isSubmitting
+              ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF24170B),
+            ),
+          )
+              : const Text(
+            'Tạo',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _GuildInput extends StatelessWidget {
