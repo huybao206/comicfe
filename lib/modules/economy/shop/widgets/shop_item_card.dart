@@ -16,159 +16,290 @@ class ShopItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rarityColor = _rarityColor(item.rarityText);
+
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(24),
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF17110C),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFF735624)),
+            color: const Color(0xFF130D08),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: rarityColor.withOpacity(0.58)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.22),
-                blurRadius: 14,
+                color: rarityColor.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _ItemImage(iconUrl: item.iconUrl),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.itemName,
-                        style: const TextStyle(
-                          color: Color(0xFFF6E7BE),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item.description?.trim().isNotEmpty == true
-                            ? item.description!
-                            : 'Một bảo vật quý hiếm dành cho hành giả trên con đường tu tiên.',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFFD5C6A2),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -28,
+                top: -28,
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: rarityColor.withOpacity(0.08),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(13),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ItemImage(
+                      iconUrl: item.iconUrl,
+                      rarityColor: rarityColor,
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _infoChip(
-                            icon: Icons.monetization_on_outlined,
-                            text: '${item.priceGold} vàng',
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.itemName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFFF6E7BE),
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              _RarityBadge(
+                                text: item.rarityText,
+                                color: rarityColor,
+                              ),
+                            ],
                           ),
-                          _infoChip(
-                            icon: Icons.diamond_outlined,
-                            text: '${item.pricePremium} ngọc',
-                          ),
-                          if (item.rarity != null &&
-                              item.rarity!.trim().isNotEmpty)
-                            _infoChip(
-                              icon: Icons.stars_rounded,
-                              text: item.rarity!,
+                          const SizedBox(height: 6),
+                          Text(
+                            item.description?.trim().isNotEmpty == true
+                                ? item.description!
+                                : 'Bảo vật quý hiếm hỗ trợ đạo hữu tu luyện.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: const Color(0xFFE9D7AE).withOpacity(0.70),
+                              fontSize: 12.5,
+                              height: 1.42,
                             ),
-                          _infoChip(
-                            icon: Icons.workspace_premium_outlined,
-                            text: 'VIP ${item.vipRequiredLevel ?? 0}+',
+                          ),
+                          const SizedBox(height: 11),
+                          Wrap(
+                            spacing: 7,
+                            runSpacing: 7,
+                            children: [
+                              _InfoChip(
+                                icon: Icons.monetization_on_outlined,
+                                text: item.isFree
+                                    ? 'Miễn phí'
+                                    : '${item.priceGold} vàng',
+                                color: const Color(0xFFFFD27A),
+                              ),
+                              _InfoChip(
+                                icon: Icons.diamond_outlined,
+                                text: '${item.pricePremium} ngọc',
+                                color: const Color(0xFF8FB0FF),
+                              ),
+                              _InfoChip(
+                                icon: Icons.workspace_premium_outlined,
+                                text: 'VIP ${item.vipRequiredLevel ?? 0}+',
+                                color: const Color(0xFFFFD27A),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.stockQuantity == null
+                                      ? 'Kho: không giới hạn'
+                                      : 'Kho: ${item.stockQuantity}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.42),
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                height: 38,
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFFD27A),
+                                      Color(0xFFD4A02F),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFD4A02F)
+                                          .withOpacity(0.20),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'Xem',
+                                      style: TextStyle(
+                                        color: Color(0xFF211407),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Color(0xFF211407),
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton.icon(
-                          onPressed: onTap,
-                          icon: const Icon(Icons.visibility_outlined, size: 17),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFC7962F),
-                            foregroundColor: const Color(0xFF24170B),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          label: const Text(
-                            'Xem chi tiết',
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Color _rarityColor(String rarity) {
+    switch (rarity.toLowerCase()) {
+      case 'legendary':
+      case 'ssr':
+        return const Color(0xFFFFD27A);
+      case 'epic':
+      case 'sr':
+        return const Color(0xFFB58CFF);
+      case 'rare':
+      case 'r':
+        return const Color(0xFF60A5FA);
+      case 'uncommon':
+        return const Color(0xFF4ADE80);
+      default:
+        return const Color(0xFFC7962F);
+    }
   }
 }
 
 class _ItemImage extends StatelessWidget {
   const _ItemImage({
     required this.iconUrl,
+    required this.rarityColor,
   });
 
   final String? iconUrl;
+  final Color rarityColor;
 
   @override
   Widget build(BuildContext context) {
     final hasImage = iconUrl != null && iconUrl!.trim().isNotEmpty;
 
     return Container(
-      width: 82,
-      height: 82,
+      width: 86,
+      height: 86,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF7B5C28)),
-        color: const Color(0xFF21170F),
+        gradient: LinearGradient(
+          colors: [
+            rarityColor.withOpacity(0.9),
+            rarityColor.withOpacity(0.18),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(21),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF21170F),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: hasImage
             ? Image.network(
           iconUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const _ItemPlaceholder(),
+          errorBuilder: (_, __, ___) => _placeholder(),
         )
-            : const _ItemPlaceholder(),
+            : _placeholder(),
+      ),
+    );
+  }
+
+  Widget _placeholder() {
+    return const Center(
+      child: Icon(
+        Icons.auto_awesome_rounded,
+        size: 38,
+        color: Color(0xFFE0B85C),
       ),
     );
   }
 }
 
-class _ItemPlaceholder extends StatelessWidget {
-  const _ItemPlaceholder();
+class _RarityBadge extends StatelessWidget {
+  const _RarityBadge({
+    required this.text,
+    required this.color,
+  });
+
+  final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Icon(
-        Icons.inventory_2_outlined,
-        size: 36,
-        color: Color(0xFFE0B85C),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.52)),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 9.5,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }
@@ -178,42 +309,37 @@ class _InfoChip extends StatelessWidget {
   const _InfoChip({
     required this.icon,
     required this.text,
+    required this.color,
   });
 
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFF23180F),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFF5E451D)),
+        border: Border.all(color: color.withOpacity(0.32)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFFE0B85C)),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
           Text(
             text,
             style: const TextStyle(
               color: Color(0xFFE9D7AE),
-              fontWeight: FontWeight.w600,
-              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              fontSize: 11.5,
             ),
           ),
         ],
       ),
     );
   }
-}
-
-Widget _infoChip({
-  required IconData icon,
-  required String text,
-}) {
-  return _InfoChip(icon: icon, text: text);
 }

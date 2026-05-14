@@ -13,40 +13,73 @@ class GuildService {
   Future<List<Guild>> getGuilds() async {
     final data = await apiClient.get(ApiPaths.guilds);
 
-    List rawList = [];
-    if (data is List) {
-      rawList = data;
-    } else if (data is Map && data['data'] is List) {
-      rawList = data['data'];
-    }
+    final rawList = _extractList(
+      data,
+      keys: const [
+        'items',
+        'data',
+        'rows',
+        'results',
+        'guilds',
+      ],
+    );
 
     return rawList
-        .map((e) => Guild.fromMap(Map<String, dynamic>.from(e as Map)))
+        .whereType<Map>()
+        .map(
+          (e) => Guild.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
+        .where((guild) => guild.id > 0)
         .toList();
   }
 
   Future<Guild> getGuildDetail(int guildId) async {
     final data = await apiClient.get(ApiPaths.guildDetail(guildId));
 
-    if (data is Map && data['data'] is Map) {
-      return Guild.fromMap(Map<String, dynamic>.from(data['data'] as Map));
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      if (map['data'] is Map) {
+        return Guild.fromMap(
+          Map<String, dynamic>.from(map['data'] as Map),
+        );
+      }
+
+      if (map['guild'] is Map) {
+        return Guild.fromMap(
+          Map<String, dynamic>.from(map['guild'] as Map),
+        );
+      }
+
+      return Guild.fromMap(map);
     }
 
-    return Guild.fromMap(Map<String, dynamic>.from(data as Map));
+    throw Exception('Dữ liệu guild không hợp lệ');
   }
 
   Future<List<GuildMember>> getGuildMembers(int guildId) async {
     final data = await apiClient.get(ApiPaths.guildMembers(guildId));
 
-    List rawList = [];
-    if (data is List) {
-      rawList = data;
-    } else if (data is Map && data['data'] is List) {
-      rawList = data['data'];
-    }
+    final rawList = _extractList(
+      data,
+      keys: const [
+        'items',
+        'data',
+        'rows',
+        'results',
+        'members',
+      ],
+    );
 
     return rawList
-        .map((e) => GuildMember.fromMap(Map<String, dynamic>.from(e as Map)))
+        .whereType<Map>()
+        .map(
+          (e) => GuildMember.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
         .toList();
   }
 
@@ -64,20 +97,63 @@ class GuildService {
       },
     );
 
-    if (data is Map && data['data'] is Map) {
-      return Map<String, dynamic>.from(data['data'] as Map);
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      if (map['data'] is Map) {
+        return Map<String, dynamic>.from(map['data'] as Map);
+      }
+
+      return map;
     }
 
-    return Map<String, dynamic>.from(data as Map);
+    throw Exception('Tạo guild thất bại');
   }
 
   Future<Map<String, dynamic>> joinGuild(int guildId) async {
     final data = await apiClient.post(ApiPaths.guildJoinRequests(guildId));
 
-    if (data is Map && data['data'] is Map) {
-      return Map<String, dynamic>.from(data['data'] as Map);
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      if (map['data'] is Map) {
+        return Map<String, dynamic>.from(map['data'] as Map);
+      }
+
+      return map;
     }
 
-    return Map<String, dynamic>.from(data as Map);
+    throw Exception('Gửi yêu cầu tham gia thất bại');
+  }
+
+  List _extractList(
+      dynamic data, {
+        required List<String> keys,
+      }) {
+    if (data is List) return data;
+
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      for (final key in keys) {
+        final value = map[key];
+
+        if (value is List) {
+          return value;
+        }
+
+        if (value is Map) {
+          final nested = Map<String, dynamic>.from(value);
+
+          if (nested['items'] is List) return nested['items'] as List;
+          if (nested['rows'] is List) return nested['rows'] as List;
+          if (nested['results'] is List) return nested['results'] as List;
+          if (nested['guilds'] is List) return nested['guilds'] as List;
+          if (nested['members'] is List) return nested['members'] as List;
+        }
+      }
+    }
+
+    return const [];
   }
 }

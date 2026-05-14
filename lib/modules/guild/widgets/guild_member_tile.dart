@@ -16,22 +16,27 @@ class GuildMemberTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF23180F),
+        color: const Color(0xFF151D31),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF5E451D)),
+        border: Border.all(color: const Color(0xFF263756)),
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF2B1E12),
-              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF6574FF),
+                  Color(0xFF334CFF),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.person_outline_rounded,
-              color: Color(0xFFE0B85C),
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 12),
@@ -42,27 +47,40 @@ class GuildMemberTile extends StatelessWidget {
                 Text(
                   member.name,
                   style: const TextStyle(
-                    color: Color(0xFFE8D7B3),
-                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFFFE9B0),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   member.role ?? 'Thành viên',
-                  style: const TextStyle(
-                    color: Color(0xFFB89E70),
-                    fontSize: 12.5,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.50),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
           if (member.contributionPoints != null)
-            Text(
-              '${member.contributionPoints} điểm',
-              style: const TextStyle(
-                color: Color(0xFFF6E7BE),
-                fontWeight: FontWeight.w700,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4A02F).withOpacity(0.14),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: const Color(0xFFD4A02F).withOpacity(0.38),
+                ),
+              ),
+              child: Text(
+                '${member.contributionPoints} điểm',
+                style: const TextStyle(
+                  color: Color(0xFFFFD27A),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11.5,
+                ),
               ),
             ),
         ],

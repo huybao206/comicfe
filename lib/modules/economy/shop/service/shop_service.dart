@@ -3,23 +3,24 @@ import '../../../../core/network/api_paths.dart';
 import '../model/shop_item.dart';
 
 class ShopService {
-  final ApiClient apiClient;
+  ShopService({
+    required this.apiClient,
+  });
 
-  ShopService({required this.apiClient});
+  final ApiClient apiClient;
 
   Future<List<ShopItem>> getShopItems() async {
     final response = await apiClient.get(ApiPaths.shopItems);
 
-    List rawList = [];
-
-    if (response is List) {
-      rawList = response;
-    } else if (response is Map && response['data'] is List) {
-      rawList = response['data'];
-    }
+    final rawList = _extractList(response);
 
     return rawList
-        .map((e) => ShopItem.fromMap(Map<String, dynamic>.from(e)))
+        .whereType<Map>()
+        .map(
+          (e) => ShopItem.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
         .where((e) => e.isActive)
         .toList();
   }
@@ -40,5 +41,32 @@ class ShopService {
     }
 
     throw Exception('Server response error');
+  }
+
+  List _extractList(dynamic data) {
+    if (data is List) return data;
+
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      if (map['items'] is List) return map['items'] as List;
+      if (map['data'] is List) return map['data'] as List;
+      if (map['rows'] is List) return map['rows'] as List;
+      if (map['results'] is List) return map['results'] as List;
+      if (map['shopItems'] is List) return map['shopItems'] as List;
+      if (map['shop_items'] is List) return map['shop_items'] as List;
+
+      if (map['data'] is Map) {
+        final nested = Map<String, dynamic>.from(map['data'] as Map);
+
+        if (nested['items'] is List) return nested['items'] as List;
+        if (nested['rows'] is List) return nested['rows'] as List;
+        if (nested['results'] is List) return nested['results'] as List;
+        if (nested['shopItems'] is List) return nested['shopItems'] as List;
+        if (nested['shop_items'] is List) return nested['shop_items'] as List;
+      }
+    }
+
+    return const [];
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../model/guild.dart';
-import 'guild_info_chip.dart';
 
 class GuildDetailHeader extends StatelessWidget {
   const GuildDetailHeader({
@@ -13,77 +12,100 @@ class GuildDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logoUrl = guild.logoUrl;
-
     return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      height: 330,
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment.topRight,
+          radius: 1.2,
           colors: [
-            Color(0xFF2B1E12),
-            Color(0xFF17110C),
+            Color(0xFF574117),
+            Color(0xFF1D140C),
+            Color(0xFF070B14),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          stops: [0, 0.48, 1],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF7A5A26)),
       ),
-      child: Row(
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Container(
-            width: 82,
-            height: 82,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFF7B5C28)),
-              color: const Color(0xFF21170F),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: (logoUrl ?? '').isNotEmpty
-                  ? Image.network(
-                logoUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _LogoFallback(),
-              )
-                  : const _LogoFallback(),
+          Positioned(
+            top: 52,
+            right: -52,
+            child: Container(
+              width: 190,
+              height: 190,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFD4A02F).withOpacity(0.10),
+              ),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
+          Positioned(
+            bottom: -72,
+            left: -72,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF6574FF).withOpacity(0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 18,
+            right: 18,
+            bottom: 24,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _LargeGuildLogo(logoUrl: guild.logoUrl),
+                const SizedBox(height: 16),
+                _StatusBadge(text: guild.displayStatus),
+                const SizedBox(height: 10),
                 Text(
                   guild.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFFF8E6B5),
-                    fontSize: 22,
+                    color: Color(0xFFFFE9B0),
+                    fontSize: 27,
                     fontWeight: FontWeight.w900,
+                    height: 1.08,
                   ),
                 ),
-                const SizedBox(height: 6),
-                if (guild.slug.isNotEmpty)
-                  Text(
-                    guild.slug,
-                    style: const TextStyle(
-                      color: Color(0xFFD7C39A),
-                      fontSize: 13,
-                    ),
+                const SizedBox(height: 7),
+                Text(
+                  guild.slug.isNotEmpty ? '@${guild.slug}' : 'Tông môn tu tiên',
+                  style: TextStyle(
+                    color: const Color(0xFFE9D7AE).withOpacity(0.68),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
-                const SizedBox(height: 10),
+                ),
+                const SizedBox(height: 13),
                 Wrap(
+                  alignment: WrapAlignment.center,
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    GuildInfoChip(
+                    _InfoChip(
                       icon: Icons.star_outline_rounded,
                       text: 'Lv ${guild.level ?? 0}',
+                      color: const Color(0xFFFFD27A),
                     ),
-                    GuildInfoChip(
+                    _InfoChip(
                       icon: Icons.bolt_outlined,
                       text: 'Power ${guild.guildPower ?? 0}',
+                      color: const Color(0xFF8FB0FF),
+                    ),
+                    _InfoChip(
+                      icon: Icons.person_outline_rounded,
+                      text: guild.hasLeader
+                          ? guild.leaderName!
+                          : 'Chưa có leader',
+                      color: const Color(0xFF4ADE80),
                     ),
                   ],
                 ),
@@ -96,16 +118,132 @@ class GuildDetailHeader extends StatelessWidget {
   }
 }
 
-class _LogoFallback extends StatelessWidget {
-  const _LogoFallback();
+class _LargeGuildLogo extends StatelessWidget {
+  const _LargeGuildLogo({
+    required this.logoUrl,
+  });
+
+  final String? logoUrl;
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = logoUrl != null && logoUrl!.trim().isNotEmpty;
+
+    return Container(
+      width: 124,
+      height: 124,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFFFD27A),
+            Color(0xFFD4A02F),
+            Color(0xFF7A5A26),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(34),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD4A02F).withOpacity(0.28),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF21170F),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: hasImage
+            ? Image.network(
+          logoUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _fallback(),
+        )
+            : _fallback(),
+      ),
+    );
+  }
+
+  Widget _fallback() {
     return const Center(
       child: Icon(
         Icons.groups_rounded,
-        size: 34,
+        size: 58,
         color: Color(0xFFE0B85C),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4ADE80).withOpacity(0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0xFF4ADE80).withOpacity(0.55),
+        ),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF86EFAC),
+          fontWeight: FontWeight.w900,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.24),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.34)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFFE9D7AE),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

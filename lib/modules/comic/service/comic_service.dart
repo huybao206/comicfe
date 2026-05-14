@@ -12,7 +12,7 @@ class ComicService {
 
   Future<List<Comic>> getComics({
     int page = 1,
-    int limit = 20,
+    int limit = 100,
     String? keyword,
   }) async {
     final data = await apiClient.get(
@@ -25,41 +25,89 @@ class ComicService {
       },
     );
 
-    final body = Map<String, dynamic>.from(data as Map);
-    final items = body['items'] as List? ?? [];
+    final items = _extractList(data);
 
     return items
-        .map((e) => Comic.fromMap(Map<String, dynamic>.from(e)))
+        .whereType<Map>()
+        .map(
+          (e) => Comic.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
+        .where((comic) => comic.id > 0)
         .toList();
   }
 
   Future<Comic> getComicDetail(int comicId) async {
     final data = await apiClient.get(ApiPaths.comicDetail(comicId));
-    return Comic.fromMap(Map<String, dynamic>.from(data as Map));
+
+    return Comic.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
   }
 
   Future<List<Chapter>> getChaptersByComic(int comicId) async {
     final data = await apiClient.get(ApiPaths.chaptersByComic(comicId));
-    final items = data as List? ?? [];
+
+    final items = _extractList(data);
 
     return items
-        .map((e) => Chapter.fromMap(Map<String, dynamic>.from(e)))
+        .whereType<Map>()
+        .map(
+          (e) => Chapter.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
         .toList();
   }
 
   Future<Chapter> getChapterDetail(int chapterId) async {
     final data = await apiClient.get(ApiPaths.chapterDetail(chapterId));
-    return Chapter.fromMap(Map<String, dynamic>.from(data as Map));
+
+    return Chapter.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
   }
 
   Future<ComicFollowResult> followComic(int comicId) async {
     final data = await apiClient.post(ApiPaths.followComic(comicId));
-    return ComicFollowResult.fromMap(Map<String, dynamic>.from(data as Map));
+
+    return ComicFollowResult.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
   }
 
   Future<ComicFollowResult> unfollowComic(int comicId) async {
     final data = await apiClient.delete(ApiPaths.followComic(comicId));
-    return ComicFollowResult.fromMap(Map<String, dynamic>.from(data as Map));
+
+    return ComicFollowResult.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  List _extractList(dynamic data) {
+    if (data is List) return data;
+
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      if (map['items'] is List) return map['items'] as List;
+      if (map['data'] is List) return map['data'] as List;
+      if (map['rows'] is List) return map['rows'] as List;
+      if (map['results'] is List) return map['results'] as List;
+      if (map['comics'] is List) return map['comics'] as List;
+
+      if (map['data'] is Map) {
+        final nested = Map<String, dynamic>.from(map['data'] as Map);
+
+        if (nested['items'] is List) return nested['items'] as List;
+        if (nested['rows'] is List) return nested['rows'] as List;
+        if (nested['results'] is List) return nested['results'] as List;
+        if (nested['comics'] is List) return nested['comics'] as List;
+      }
+    }
+
+    return const [];
   }
 }
 
@@ -83,9 +131,15 @@ class ComicFollowResult {
   }
 
   static int _toInt(dynamic value) {
+    if (value == null) return 0;
+
     if (value is int) return value;
     if (value is num) return value.toInt();
-    return int.tryParse(value?.toString() ?? '') ?? 0;
+
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null' || text == '-') return 0;
+
+    return int.tryParse(text) ?? double.tryParse(text)?.toInt() ?? 0;
   }
 
   static bool _toBool(dynamic value) {
@@ -94,6 +148,7 @@ class ComicFollowResult {
     if (value is num) return value.toInt() == 1;
 
     final text = value?.toString().toLowerCase().trim();
+
     return text == 'true' || text == '1' || text == 'yes';
   }
 }
