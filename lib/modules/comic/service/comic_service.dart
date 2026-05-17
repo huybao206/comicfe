@@ -46,6 +46,20 @@ class ComicService {
     );
   }
 
+  Future<void> saveReadingProgress({
+    required int chapterId,
+    int lastPageNumber = 1,
+    double? progressPercent,
+  }) async {
+    await apiClient.post(
+      ApiPaths.saveChapterProgress(chapterId),
+      data: {
+        'last_page_number': lastPageNumber,
+        if (progressPercent != null) 'progress_percent': progressPercent,
+      },
+    );
+  }
+
   Future<List<Chapter>> getChaptersByComic(int comicId) async {
     final data = await apiClient.get(ApiPaths.chaptersByComic(comicId));
 

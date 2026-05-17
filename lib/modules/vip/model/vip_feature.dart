@@ -21,12 +21,12 @@ class VipFeature {
     return VipFeature(
       id: toInt(map['id']),
       featureCode: (map['feature_code'] ?? '').toString(),
-      featureName: (map['feature_name'] ?? '').toString(),
+      featureName: (map['feature_name'] ?? map['featureName'] ?? map['feature_code'] ?? '').toString(),
       description: map['description']?.toString(),
       requiredVipLevel: toInt(
-        map['required_vip_level'] ?? map['requiredVipLevel'],
+        map['required_vip_level'] ?? map['requiredVipLevel'] ?? map['level_number'],
       ),
-      isActive: '${map['is_active']}' == '1' || map['is_active'] == true,
+      isActive: map['is_active'] == null ? true : (map['is_active'].toString() == '1' || map['is_active'] == true),
     );
   }
 }

@@ -38,8 +38,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
-  Future<Chapter> _loadChapter() {
-    return context.read<ComicService>().getChapterDetail(widget.chapterId);
+  Future<Chapter> _loadChapter() async {
+    final service = context.read<ComicService>();
+    final chapter = await service.getChapterDetail(widget.chapterId);
+
+    // Ghi nhận lịch sử đọc để mục "Lịch sử đọc" trong trang Tôi có dữ liệu thật.
+    // Nếu API lưu tiến độ lỗi thì vẫn cho người dùng đọc truyện bình thường.
+    try {
+      await service.saveReadingProgress(
+        chapterId: widget.chapterId,
+        lastPageNumber: 1,
+      );
+    } catch (_) {}
+
+    return chapter;
   }
 
   Future<void> _refresh() async {

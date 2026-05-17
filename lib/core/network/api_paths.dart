@@ -53,6 +53,12 @@ class ApiPaths {
   static const String vipFeatures = '/vip/features';
   static const String vipMe = '/vip/me';
 
+  // Plus
+  static String saveChapterProgress(int chapterId) => '/chapters/$chapterId/read-progress';
+
+  static const String myInventory = '/inventory/me';
+  static const String useInventoryItem = '/inventory/use';
+
   // Comments
   static const String comments = '/comments';
   static String comicComments(int comicId) => '/comments/comic/$comicId';

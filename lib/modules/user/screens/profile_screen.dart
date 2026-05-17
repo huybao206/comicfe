@@ -7,8 +7,14 @@ import '../widgets/profile_action_grid.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_info_card.dart';
 import '../widgets/profile_section_title.dart';
+import '../../vip/screens/vip_screen.dart';
 import '../widgets/profile_setting_card.dart';
+import 'account_security_screen.dart';
 import 'edit_profile_screen.dart';
+import 'followed_comics_screen.dart';
+import 'inventory_screen.dart';
+import 'reading_history_screen.dart';
+import 'support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,10 +43,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     context.read<UserProvider>().loadMyProfile();
   }
 
-  void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tính năng đang phát triển')),
+  Future<void> _openPage(Widget page) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => page),
     );
+
+    if (!mounted) return;
+    context.read<UserProvider>().loadMyProfile();
   }
 
   Future<void> _handleLogout() async {
@@ -181,25 +190,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.history_rounded,
                     title: 'Lịch sử đọc',
                     subtitle: 'Theo dõi tiến độ',
-                    onTap: _showComingSoon,
+                    onTap: () => _openPage(const ReadingHistoryScreen()),
                   ),
                   ProfileActionItemData(
                     icon: Icons.favorite_border_rounded,
                     title: 'Theo dõi',
                     subtitle: 'Truyện yêu thích',
-                    onTap: _showComingSoon,
+                    onTap: () => _openPage(const FollowedComicsScreen()),
                   ),
                   ProfileActionItemData(
                     icon: Icons.workspace_premium_rounded,
                     title: 'VIP',
                     subtitle: 'Đặc quyền tu luyện',
-                    onTap: _showComingSoon,
+                    onTap: () => _openPage(const VipScreen()),
                   ),
                   ProfileActionItemData(
                     icon: Icons.inventory_2_outlined,
                     title: 'Túi đồ',
                     subtitle: 'Vật phẩm sở hữu',
-                    onTap: _showComingSoon,
+                    onTap: () => _openPage(const InventoryScreen()),
                   ),
                 ],
               ),
@@ -217,14 +226,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.security_rounded,
                 title: 'Bảo mật tài khoản',
                 subtitle: 'Quản lý thông tin đăng nhập',
-                onTap: _showComingSoon,
+                onTap: () => _openPage(const AccountSecurityScreen()),
               ),
               const SizedBox(height: 10),
               ProfileSettingCard(
                 icon: Icons.help_outline_rounded,
                 title: 'Hỗ trợ',
                 subtitle: 'Giải đáp thắc mắc và phản hồi',
-                onTap: _showComingSoon,
+                onTap: () => _openPage(const SupportScreen()),
               ),
               const SizedBox(height: 18),
               OutlinedButton.icon(

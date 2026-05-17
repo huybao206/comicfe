@@ -68,14 +68,20 @@ class UserProfile {
 
     final cultivationMap = map['cultivation'] is Map
         ? Map<String, dynamic>.from(map['cultivation'] as Map)
+        : map['cultivation_summary'] is Map
+        ? Map<String, dynamic>.from(map['cultivation_summary'] as Map)
         : <String, dynamic>{};
 
     final vipMap = map['vip'] is Map
         ? Map<String, dynamic>.from(map['vip'] as Map)
+        : map['vip_summary'] is Map
+        ? Map<String, dynamic>.from(map['vip_summary'] as Map)
         : <String, dynamic>{};
 
     final guildMap = map['guild'] is Map
         ? Map<String, dynamic>.from(map['guild'] as Map)
+        : map['guild_summary'] is Map
+        ? Map<String, dynamic>.from(map['guild_summary'] as Map)
         : <String, dynamic>{};
 
     final statsMap = map['stats'] is Map
@@ -105,6 +111,8 @@ class UserProfile {
 
       level: _toInt(
         cultivationMap['level'] ??
+            cultivationMap['level_number'] ??
+            cultivationMap['levelNumber'] ??
             userMap['level'] ??
             map['level'],
       ),
@@ -117,6 +125,8 @@ class UserProfile {
       expToNextLevel: _toInt(
         cultivationMap['exp_to_next_level'] ??
             cultivationMap['expToNextLevel'] ??
+            cultivationMap['exp_required'] ??
+            cultivationMap['expRequired'] ??
             map['exp_to_next_level'] ??
             map['expToNextLevel'],
       ),
@@ -124,17 +134,23 @@ class UserProfile {
       coin: _toInt(
         resourceMap['coin'] ??
             resourceMap['coins'] ??
+            resourceMap['premium_currency'] ??
+            resourceMap['premiumCurrency'] ??
             userMap['coin'] ??
             map['coin'],
       ),
       gold: _toInt(
         resourceMap['gold'] ??
+            resourceMap['gold_balance'] ??
+            resourceMap['goldBalance'] ??
             userMap['gold'] ??
             map['gold'],
       ),
       spiritStone: _toInt(
         resourceMap['spirit_stone'] ??
             resourceMap['spiritStone'] ??
+            resourceMap['spirit_stones'] ??
+            resourceMap['spiritStones'] ??
             resourceMap['linh_thach'] ??
             map['spirit_stone'] ??
             map['spiritStone'],
@@ -143,12 +159,16 @@ class UserProfile {
       vipLevel: _toInt(
         vipMap['level'] ??
             vipMap['vip_level'] ??
+            vipMap['vip_level_number'] ??
+            vipMap['level_number'] ??
             userMap['vip_level'] ??
             map['vip_level'] ??
             map['vipLevel'],
       ),
       vipName: (vipMap['name'] ??
           vipMap['vip_name'] ??
+          vipMap['vip_level_name'] ??
+          vipMap['level_name'] ??
           map['vip_name'] ??
           map['vipName'])
           ?.toString(),
@@ -172,6 +192,8 @@ class UserProfile {
           ?.toString(),
       guildRole: (guildMap['role'] ??
           guildMap['member_role'] ??
+          guildMap['role_name'] ??
+          guildMap['roleName'] ??
           map['guild_role'] ??
           map['guildRole'])
           ?.toString(),
@@ -179,12 +201,16 @@ class UserProfile {
       totalReadChapters: _toInt(
         statsMap['total_read_chapters'] ??
             statsMap['totalReadChapters'] ??
+            statsMap['reading_history_count'] ??
+            statsMap['readingHistoryCount'] ??
             map['total_read_chapters'] ??
             map['totalReadChapters'],
       ),
       totalFollowedComics: _toInt(
         statsMap['total_followed_comics'] ??
             statsMap['totalFollowedComics'] ??
+            statsMap['follow_count'] ??
+            statsMap['followCount'] ??
             map['total_followed_comics'] ??
             map['totalFollowedComics'],
       ),
