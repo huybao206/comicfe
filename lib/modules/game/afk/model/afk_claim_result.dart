@@ -1,16 +1,28 @@
 class AfkClaimResult {
   final int claimedExp;
-  final int claimedGold;
+  final double claimedGold;
 
-  AfkClaimResult({
+  const AfkClaimResult({
     required this.claimedExp,
     required this.claimedGold,
   });
 
   factory AfkClaimResult.fromMap(Map<String, dynamic> map) {
     return AfkClaimResult(
-      claimedExp: (map['claimedExp'] as num?)?.toInt() ?? 0,
-      claimedGold: (map['claimedGold'] as num?)?.toInt() ?? 0,
+      claimedExp: _toInt(map['claimedExp'] ?? map['claimed_exp']),
+      claimedGold: _toDouble(map['claimedGold'] ?? map['claimed_gold']),
     );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

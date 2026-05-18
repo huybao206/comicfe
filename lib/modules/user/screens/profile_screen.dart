@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/provider/auth_provider.dart';
+import '../../vip/screens/vip_screen.dart';
 import '../provider/user_provider.dart';
 import '../widgets/profile_action_grid.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_info_card.dart';
 import '../widgets/profile_section_title.dart';
-import '../../vip/screens/vip_screen.dart';
 import '../widgets/profile_setting_card.dart';
 import 'account_security_screen.dart';
 import 'edit_profile_screen.dart';
@@ -27,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
       context.read<UserProvider>().loadMyProfile();
     });
@@ -57,42 +58,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF15110C),
+          backgroundColor: const Color(0xFF10182B),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF8B6A2B), width: 1.2),
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(
+              color: Color(0xFF7A5A26),
+              width: 1.1,
+            ),
           ),
           title: const Text(
             'Đăng xuất',
             style: TextStyle(
-              color: Color(0xFFF6E7BE),
-              fontWeight: FontWeight.w800,
+              color: Color(0xFFFFE9B0),
+              fontWeight: FontWeight.w900,
             ),
           ),
-          content: const Text(
+          content: Text(
             'Bạn có chắc muốn đăng xuất khỏi tài khoản này không?',
             style: TextStyle(
-              color: Color(0xFFE8D7B3),
+              color: Colors.white.withOpacity(0.72),
               height: 1.45,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text(
+              child: Text(
                 'Hủy',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.72),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFC7962F),
-                foregroundColor: const Color(0xFF24170B),
+                backgroundColor: const Color(0xFFD4A02F),
+                foregroundColor: const Color(0xFF211407),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               child: const Text(
                 'Đăng xuất',
-                style: TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -134,129 +144,137 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profile = provider.profile;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0A07),
+      backgroundColor: const Color(0xFF070B14),
       body: RefreshIndicator(
-        color: const Color(0xFFC7962F),
-        backgroundColor: const Color(0xFF1A130D),
+        color: const Color(0xFFD4A02F),
+        backgroundColor: const Color(0xFF10182B),
         onRefresh: () => context.read<UserProvider>().loadMyProfile(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
           children: [
             if (provider.isLoading && profile == null) ...[
-              const SizedBox(height: 160),
+              const SizedBox(height: 180),
               const Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFFC7962F),
+                  color: Color(0xFFD4A02F),
                 ),
               ),
             ] else if (provider.errorMessage != null && profile == null) ...[
-              const SizedBox(height: 140),
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    provider.errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFFE6D5B0),
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
+              const SizedBox(height: 130),
+              _ProfileErrorView(
+                message: provider.errorMessage!,
+                onRetry: () =>
+                    context.read<UserProvider>().loadMyProfile(),
               ),
-            ] else ...[
+            ] else if (profile != null) ...[
               ProfileHeader(
-                displayName: _displayName(
-                  profile?.displayName,
-                  profile?.username,
-                ),
-                username: profile?.username ?? '',
-                email: profile?.email ?? '',
-                avatarUrl: profile?.avatarUrl,
+                profile: profile,
                 onEdit: _openEditProfile,
               ),
-              const SizedBox(height: 16),
-              ProfileInfoCard(
-                email: profile?.email ?? '',
-                username: profile?.username ?? '',
+
+              const SizedBox(height: 14),
+
+              ProfileInfoCard(profile: profile),
+
+              const SizedBox(height: 18),
+
+              const ProfileSectionTitle(
+                title: 'Tiện ích cá nhân',
+                icon: Icons.dashboard_customize_outlined,
+                action: 'Hoạt động',
               ),
-              const SizedBox(height: 16),
-              const ProfileSectionTitle(title: 'Tiện ích cá nhân'),
+
               const SizedBox(height: 10),
+
               ProfileActionGrid(
                 items: [
                   ProfileActionItemData(
-                    icon: Icons.history_rounded,
-                    title: 'Lịch sử đọc',
-                    subtitle: 'Theo dõi tiến độ',
-                    onTap: () => _openPage(const ReadingHistoryScreen()),
+                    icon: Icons.menu_book_outlined,
+                    title: 'Đã đọc',
+                    subtitle: '${profile.totalReadChapters} chương',
+                    color: const Color(0xFF8FB0FF),
+                    onTap: () => _openPage(
+                      const ReadingHistoryScreen(),
+                    ),
                   ),
                   ProfileActionItemData(
                     icon: Icons.favorite_border_rounded,
                     title: 'Theo dõi',
-                    subtitle: 'Truyện yêu thích',
-                    onTap: () => _openPage(const FollowedComicsScreen()),
+                    subtitle: '${profile.totalFollowedComics} truyện',
+                    color: const Color(0xFFFF7AA8),
+                    onTap: () => _openPage(
+                      const FollowedComicsScreen(),
+                    ),
                   ),
                   ProfileActionItemData(
-                    icon: Icons.workspace_premium_rounded,
+                    icon: Icons.workspace_premium_outlined,
                     title: 'VIP',
-                    subtitle: 'Đặc quyền tu luyện',
-                    onTap: () => _openPage(const VipScreen()),
+                    subtitle: profile.vipDisplayName,
+                    color: const Color(0xFFFFD27A),
+                    onTap: () => _openPage(
+                      const VipScreen(),
+                    ),
                   ),
                   ProfileActionItemData(
                     icon: Icons.inventory_2_outlined,
                     title: 'Túi đồ',
                     subtitle: 'Vật phẩm sở hữu',
-                    onTap: () => _openPage(const InventoryScreen()),
+                    color: const Color(0xFF4ADE80),
+                    onTap: () => _openPage(
+                      const InventoryScreen(),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const ProfileSectionTitle(title: 'Thiết lập'),
+
+              const SizedBox(height: 18),
+
+              const ProfileSectionTitle(
+                title: 'Thiết lập',
+                icon: Icons.settings_outlined,
+                action: 'Tài khoản',
+              ),
+
               const SizedBox(height: 10),
+
               ProfileSettingCard(
                 icon: Icons.person_outline_rounded,
                 title: 'Chỉnh sửa hồ sơ',
-                subtitle: 'Hiển thị thông tin tài khoản hiện có',
+                subtitle: 'Cập nhật tên hiển thị và thông tin tài khoản',
+                color: const Color(0xFFFFD27A),
                 onTap: _openEditProfile,
               ),
+
               const SizedBox(height: 10),
+
               ProfileSettingCard(
                 icon: Icons.security_rounded,
                 title: 'Bảo mật tài khoản',
-                subtitle: 'Quản lý thông tin đăng nhập',
-                onTap: () => _openPage(const AccountSecurityScreen()),
+                subtitle: 'Quản lý đăng nhập và quyền riêng tư',
+                color: const Color(0xFF8FB0FF),
+                onTap: () => _openPage(
+                  const AccountSecurityScreen(),
+                ),
               ),
+
               const SizedBox(height: 10),
+
               ProfileSettingCard(
                 icon: Icons.help_outline_rounded,
                 title: 'Hỗ trợ',
-                subtitle: 'Giải đáp thắc mắc và phản hồi',
-                onTap: () => _openPage(const SupportScreen()),
-              ),
-              const SizedBox(height: 18),
-              OutlinedButton.icon(
-                onPressed: authProvider.isLoading ? null : _handleLogout,
-                icon: authProvider.isLoading
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFFFFC9C9),
-                  ),
-                )
-                    : const Icon(Icons.logout_rounded),
-                label: Text(authProvider.isLoading ? 'Đang đăng xuất...' : 'Đăng xuất'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFFFC9C9),
-                  side: const BorderSide(color: Color(0xFF7A2E2E)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                subtitle: 'Giải đáp thắc mắc và gửi phản hồi',
+                color: const Color(0xFF4ADE80),
+                onTap: () => _openPage(
+                  const SupportScreen(),
                 ),
+              ),
+
+              const SizedBox(height: 18),
+
+              _LogoutButton(
+                isLoading: authProvider.isLoading,
+                onTap: _handleLogout,
               ),
             ],
           ],
@@ -264,10 +282,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
 
-  String _displayName(String? displayName, String? username) {
-    if ((displayName ?? '').trim().isNotEmpty) return displayName!.trim();
-    if ((username ?? '').trim().isNotEmpty) return username!.trim();
-    return 'Đạo hữu';
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton({
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      child: OutlinedButton.icon(
+        onPressed: isLoading ? null : onTap,
+        icon: isLoading
+            ? const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFFFFC9C9),
+          ),
+        )
+            : const Icon(Icons.logout_rounded),
+        label: Text(
+          isLoading ? 'Đang đăng xuất...' : 'Đăng xuất',
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFFFC9C9),
+          backgroundColor: const Color(0xFF7A2E2E).withOpacity(0.10),
+          side: const BorderSide(color: Color(0xFF7A2E2E)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileErrorView extends StatelessWidget {
+  const _ProfileErrorView({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10182B),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFF263756)),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Color(0xFFFFD27A),
+            size: 48,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Không tải được hồ sơ',
+            style: TextStyle(
+              color: Color(0xFFFFE9B0),
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.54),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text(
+              'Tải lại',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD4A02F),
+              foregroundColor: const Color(0xFF211407),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

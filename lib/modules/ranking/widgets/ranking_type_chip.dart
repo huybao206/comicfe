@@ -17,26 +17,33 @@ class RankingTypeChip extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFC7962F)
-              : const Color(0xFF23180F),
+          gradient: selected
+              ? const LinearGradient(
+            colors: [
+              Color(0xFFFFD27A),
+              Color(0xFFD4A02F),
+            ],
+          )
+              : null,
+          color: selected ? null : const Color(0xFF10182B),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
-                ? const Color(0xFFC7962F)
-                : const Color(0xFF5E451D),
+                ? const Color(0xFFFFE9B0)
+                : const Color(0xFF263756),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             color: selected
-                ? const Color(0xFF24170B)
-                : const Color(0xFFE9D7AE),
-            fontWeight: FontWeight.w800,
+                ? const Color(0xFF211407)
+                : Colors.white.withOpacity(0.80),
+            fontWeight: FontWeight.w900,
             fontSize: 12.5,
           ),
         ),

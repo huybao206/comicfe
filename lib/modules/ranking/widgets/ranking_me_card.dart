@@ -13,26 +13,35 @@ class RankingMeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF17110C),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF735624)),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF172345),
+            Color(0xFF10182B),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFD4A02F).withOpacity(0.58)),
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
-              color: const Color(0xFF23180F),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF5E451D)),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFFD27A),
+                  Color(0xFFD4A02F),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
-              Icons.person_rounded,
-              color: Color(0xFFE0B85C),
+              Icons.person_pin_circle_rounded,
+              color: Color(0xFF211407),
+              size: 31,
             ),
           ),
           const SizedBox(width: 12),
@@ -40,32 +49,80 @@ class RankingMeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Thứ hạng của bạn',
                   style: TextStyle(
-                    color: Color(0xFFB89E70),
-                    fontSize: 12.5,
+                    color: Colors.white.withOpacity(0.54),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 5),
                 Text(
-                  '${entry.name} • #${entry.rank}',
+                  entry.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFFE8D7B3),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
+                    color: Color(0xFFFFE9B0),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15.5,
                   ),
                 ),
+                if (entry.subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    entry.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.52),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          Text(
-            '${entry.score}',
-            style: const TextStyle(
-              color: Color(0xFFF6E7BE),
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4A02F).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0xFFD4A02F).withOpacity(0.48),
+                  ),
+                ),
+                child: Text(
+                  '#${entry.rank}',
+                  style: const TextStyle(
+                    color: Color(0xFFFFD27A),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${entry.displayScore}',
+                style: const TextStyle(
+                  color: Color(0xFFFFE9B0),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                'điểm',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.46),
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
         ],
       ),

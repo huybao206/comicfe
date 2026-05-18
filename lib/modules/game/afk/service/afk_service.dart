@@ -14,58 +14,75 @@ class AfkService {
   Future<List<AfkConfig>> getAfkConfigs() async {
     final response = await apiClient.get(ApiPaths.afkConfigs);
 
-    List rawList = [];
-
-    if (response is List) {
-      rawList = response;
-    } else if (response is Map && response['data'] is List) {
-      rawList = response['data'];
-    }
+    final rawList = _extractList(response);
 
     return rawList
-        .map((e) => AfkConfig.fromMap(Map<String, dynamic>.from(e as Map)))
+        .whereType<Map>()
+        .map(
+          (e) => AfkConfig.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
         .toList();
+  }
+
+  Future<AfkSession?> getRunningSession() async {
+    final response = await apiClient.get(ApiPaths.runningAfkSession);
+
+    if (response == null) return null;
+
+    if (response is Map) {
+      return AfkSession.fromMap(
+        Map<String, dynamic>.from(response),
+      );
+    }
+
+    return null;
   }
 
   Future<AfkSession> startAfkSession() async {
     final response = await apiClient.post(ApiPaths.afkSessions);
 
-    if (response is Map && response['data'] is Map) {
-      return AfkSession.fromMap(
-        Map<String, dynamic>.from(response['data'] as Map),
-      );
-    }
-
-    return AfkSession.fromMap(Map<String, dynamic>.from(response as Map));
+    return AfkSession.fromMap(
+      Map<String, dynamic>.from(response as Map),
+    );
   }
 
   Future<AfkSession> finishAfkSession({
     required int sessionId,
   }) async {
-    final response = await apiClient.post(ApiPaths.finishAfkSession(sessionId));
+    final response = await apiClient.post(
+      ApiPaths.finishAfkSession(sessionId),
+    );
 
-    if (response is Map && response['data'] is Map) {
-      return AfkSession.fromMap(
-        Map<String, dynamic>.from(response['data'] as Map),
-      );
-    }
-
-    return AfkSession.fromMap(Map<String, dynamic>.from(response as Map));
+    return AfkSession.fromMap(
+      Map<String, dynamic>.from(response as Map),
+    );
   }
 
   Future<AfkClaimResult> claimAfkSession({
     required int sessionId,
   }) async {
-    final response = await apiClient.post(ApiPaths.claimAfkSession(sessionId));
-
-    if (response is Map && response['data'] is Map) {
-      return AfkClaimResult.fromMap(
-        Map<String, dynamic>.from(response['data'] as Map),
-      );
-    }
+    final response = await apiClient.post(
+      ApiPaths.claimAfkSession(sessionId),
+    );
 
     return AfkClaimResult.fromMap(
       Map<String, dynamic>.from(response as Map),
     );
+  }
+
+  List _extractList(dynamic data) {
+    if (data is List) return data;
+
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      if (map['items'] is List) return map['items'] as List;
+      if (map['data'] is List) return map['data'] as List;
+      if (map['rows'] is List) return map['rows'] as List;
+    }
+
+    return const [];
   }
 }

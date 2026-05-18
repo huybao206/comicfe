@@ -41,6 +41,7 @@ class ApiPaths {
   // AFK
   static const String afkConfigs = '/afk/configs';
   static const String afkSessions = '/afk/sessions';
+  static const String runningAfkSession = '/afk/sessions/running';
   static String finishAfkSession(int id) => '/afk/sessions/$id/finish';
   static String claimAfkSession(int id) => '/afk/sessions/$id/claim';
 
