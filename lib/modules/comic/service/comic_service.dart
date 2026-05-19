@@ -14,6 +14,8 @@ class ComicService {
     int page = 1,
     int limit = 100,
     String? keyword,
+    String? genreSlug,
+    String? sort,
   }) async {
     final data = await apiClient.get(
       ApiPaths.comics,
@@ -22,6 +24,54 @@ class ComicService {
         'limit': limit,
         if (keyword != null && keyword.trim().isNotEmpty)
           'keyword': keyword.trim(),
+        if (genreSlug != null && genreSlug.trim().isNotEmpty)
+          'genreSlug': genreSlug.trim(),
+        if (sort != null && sort.trim().isNotEmpty)
+          'sort': sort.trim(),
+      },
+    );
+
+    final items = _extractList(data);
+
+    return items
+        .whereType<Map>()
+        .map(
+          (e) => Comic.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
+        .where((comic) => comic.id > 0)
+        .toList();
+  }
+
+
+  Future<List<ComicGenre>> getGenres() async {
+    final data = await apiClient.get(ApiPaths.comicGenres);
+    final items = _extractList(data);
+
+    return items
+        .whereType<Map>()
+        .map(
+          (e) => ComicGenre.fromMap(
+        Map<String, dynamic>.from(e),
+      ),
+    )
+        .where((genre) => genre.id > 0 && genre.name.trim().isNotEmpty)
+        .toList();
+  }
+
+  Future<List<Comic>> getComicRankings({
+    int limit = 20,
+    String sort = 'hot',
+    String? genreSlug,
+  }) async {
+    final data = await apiClient.get(
+      ApiPaths.comicRankings,
+      queryParameters: {
+        'limit': limit,
+        'sort': sort,
+        if (genreSlug != null && genreSlug.trim().isNotEmpty)
+          'genreSlug': genreSlug.trim(),
       },
     );
 
@@ -110,6 +160,7 @@ class ComicService {
       if (map['rows'] is List) return map['rows'] as List;
       if (map['results'] is List) return map['results'] as List;
       if (map['comics'] is List) return map['comics'] as List;
+      if (map['genres'] is List) return map['genres'] as List;
 
       if (map['data'] is Map) {
         final nested = Map<String, dynamic>.from(map['data'] as Map);
@@ -118,6 +169,7 @@ class ComicService {
         if (nested['rows'] is List) return nested['rows'] as List;
         if (nested['results'] is List) return nested['results'] as List;
         if (nested['comics'] is List) return nested['comics'] as List;
+        if (nested['genres'] is List) return nested['genres'] as List;
       }
     }
 

@@ -178,3 +178,44 @@ class Comic {
     return '$mediaBaseUrl/$normalized';
   }
 }
+class ComicGenre {
+  final int id;
+  final String name;
+  final String slug;
+  final String? description;
+  final int comicCount;
+
+  const ComicGenre({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.description,
+    this.comicCount = 0,
+  });
+
+  factory ComicGenre.fromMap(Map<String, dynamic> map) {
+    return ComicGenre(
+      id: _toInt(map['id'] ?? map['genre_id'] ?? map['genreId']),
+      name: (map['name'] ?? map['genre_name'] ?? map['genreName'] ?? 'Thể loại')
+          .toString(),
+      slug: (map['slug'] ?? map['genre_slug'] ?? map['genreSlug'] ?? '')
+          .toString(),
+      description: (map['description'] ?? map['desc'])?.toString(),
+      comicCount: _toInt(
+        map['comic_count'] ??
+            map['comicCount'] ??
+            map['total_comics'] ??
+            map['totalComics'],
+      ),
+    );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null' || text == '-') return 0;
+    return int.tryParse(text) ?? double.tryParse(text)?.toInt() ?? 0;
+  }
+}

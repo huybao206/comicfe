@@ -16,10 +16,13 @@ class ImageViewer extends StatelessWidget {
     return InteractiveViewer(
       minScale: 1,
       maxScale: 4,
+      clipBehavior: Clip.none,
       child: Image.network(
         imageUrl,
         width: double.infinity,
-        fit: BoxFit.contain,
+        fit: BoxFit.fitWidth,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.medium,
         errorBuilder: (_, error, stackTrace) {
           debugPrint('Image load failed: $imageUrl');
           debugPrint('Error: $error');

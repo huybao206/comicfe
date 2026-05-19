@@ -15,17 +15,6 @@ class ComicListScreen extends StatefulWidget {
 class _ComicListScreenState extends State<ComicListScreen> {
   final _searchController = TextEditingController();
 
-  int selectedCategoryIndex = 0;
-
-  final List<_ComicCategory> categories = const [
-    _ComicCategory('Tất cả', Icons.auto_stories_outlined),
-    _ComicCategory('Tu tiên', Icons.auto_awesome_outlined),
-    _ComicCategory('Action', Icons.local_fire_department_outlined),
-    _ComicCategory('Romance', Icons.favorite_outline_rounded),
-    _ComicCategory('Fantasy', Icons.public_outlined),
-    _ComicCategory('Comedy', Icons.sentiment_satisfied_alt_rounded),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -42,16 +31,20 @@ class _ComicListScreenState extends State<ComicListScreen> {
   }
 
   Future<void> _refresh() async {
-    await context.read<ComicProvider>().loadComics(
+    final provider = context.read<ComicProvider>();
+    await provider.loadComics(
       keyword: _searchController.text.trim(),
+      genreSlug: provider.selectedGenreSlug,
     );
   }
 
   void _search() {
     FocusScope.of(context).unfocus();
 
-    context.read<ComicProvider>().loadComics(
+    final provider = context.read<ComicProvider>();
+    provider.loadComics(
       keyword: _searchController.text.trim(),
+      genreSlug: provider.selectedGenreSlug,
     );
   }
 
@@ -72,7 +65,9 @@ class _ComicListScreenState extends State<ComicListScreen> {
     final continueComic = comics.length > 1 ? comics[1] : featured;
     final latest = comics;
     final recommended = comics.length > 2 ? comics.skip(1).take(8).toList() : comics;
-    final topComics = comics.take(5).toList();
+    final topComics = provider.topComics.isNotEmpty
+        ? provider.topComics.take(5).toList()
+        : _sortComicsForRanking(comics).take(5).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFF070B14),
@@ -131,16 +126,20 @@ class _ComicListScreenState extends State<ComicListScreen> {
                 _sectionHeader(
                   title: 'Thể loại nổi bật',
                   icon: Icons.grid_view_rounded,
-                  action: 'Tất cả',
+                  action: '${provider.genres.length} loại',
                 ),
                 const SizedBox(height: 10),
-                _categoryRow(),
+                _categoryRow(
+                  genres: provider.genres,
+                  selectedGenreSlug: provider.selectedGenreSlug,
+                ),
 
                 const SizedBox(height: 18),
 
                 _sectionHeader(
                   title: 'Đề cử hôm nay',
                   icon: Icons.stars_rounded,
+                  action: 'Xem thêm',
                 ),
                 const SizedBox(height: 10),
                 _horizontalComicList(recommended),
@@ -486,72 +485,44 @@ class _ComicListScreenState extends State<ComicListScreen> {
     );
   }
 
-  Widget _categoryRow() {
+  Widget _categoryRow({
+    required List<ComicGenre> genres,
+    required String? selectedGenreSlug,
+  }) {
+    final items = [
+      const ComicGenre(
+        id: 0,
+        name: 'Tất cả',
+        slug: '',
+        comicCount: 0,
+      ),
+      ...genres,
+    ];
+
     return SizedBox(
       height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
+        itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 9),
         itemBuilder: (context, index) {
-          final item = categories[index];
-          final selected = selectedCategoryIndex == index;
+          final item = items[index];
+          final isAll = item.slug.trim().isEmpty;
+          final selected = isAll
+              ? selectedGenreSlug == null || selectedGenreSlug.trim().isEmpty
+              : selectedGenreSlug == item.slug;
 
-          return InkWell(
-            borderRadius: BorderRadius.circular(999),
+          return _GenreChip(
+            name: item.name,
+            count: isAll ? null : item.comicCount,
+            icon: _genreIcon(item),
+            selected: selected,
             onTap: () {
-              setState(() {
-                selectedCategoryIndex = index;
-              });
+              context.read<ComicProvider>().loadComics(
+                keyword: _searchController.text.trim(),
+                genreSlug: isAll ? null : item.slug,
+              );
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                gradient: selected
-                    ? const LinearGradient(
-                  colors: [
-                    Color(0xFF334CFF),
-                    Color(0xFF6574FF),
-                  ],
-                )
-                    : null,
-                color: selected ? null : const Color(0xFF10182B),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: selected
-                      ? const Color(0xFFBFD0FF)
-                      : const Color(0xFF243251),
-                ),
-                boxShadow: selected
-                    ? [
-                  BoxShadow(
-                    color: const Color(0xFF6574FF).withOpacity(0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    item.icon,
-                    size: 16,
-                    color: selected ? Colors.white : const Color(0xFFBFD0FF),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    item.name,
-                    style: TextStyle(
-                      color: selected ? Colors.white : Colors.white.withOpacity(0.78),
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           );
         },
       ),
@@ -942,6 +913,43 @@ class _ComicListScreenState extends State<ComicListScreen> {
     );
   }
 
+  List<Comic> _sortComicsForRanking(List<Comic> source) {
+    final sorted = [...source];
+
+    sorted.sort((a, b) {
+      final scoreA = a.totalViews + a.totalFollows * 10;
+      final scoreB = b.totalViews + b.totalFollows * 10;
+      final byScore = scoreB.compareTo(scoreA);
+      if (byScore != 0) return byScore;
+
+      final byChapter = b.totalChapters.compareTo(a.totalChapters);
+      if (byChapter != 0) return byChapter;
+
+      return b.id.compareTo(a.id);
+    });
+
+    return sorted;
+  }
+
+  IconData _genreIcon(ComicGenre genre) {
+    final text = '${genre.name} ${genre.slug}'.toLowerCase();
+
+    if (text.contains('tu') || text.contains('luyen') || text.contains('tiên')) {
+      return Icons.auto_awesome_outlined;
+    }
+    if (text.contains('hoc') || text.contains('đường') || text.contains('duong')) {
+      return Icons.school_outlined;
+    }
+    if (text.contains('xuyen') || text.contains('khong')) {
+      return Icons.public_outlined;
+    }
+    if (text.contains('trinh') || text.contains('tham')) {
+      return Icons.manage_search_rounded;
+    }
+
+    return Icons.local_fire_department_outlined;
+  }
+
   String _formatCount(int value) {
     if (value >= 1000000) {
       final result = value / 1000000;
@@ -954,6 +962,77 @@ class _ComicListScreenState extends State<ComicListScreen> {
     }
 
     return '$value';
+  }
+}
+
+
+class _GenreChip extends StatelessWidget {
+  const _GenreChip({
+    required this.name,
+    required this.count,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String name;
+  final int? count;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          gradient: selected
+              ? const LinearGradient(
+            colors: [
+              Color(0xFF334CFF),
+              Color(0xFF6574FF),
+            ],
+          )
+              : null,
+          color: selected ? null : const Color(0xFF10182B),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? const Color(0xFFBFD0FF) : const Color(0xFF243251),
+          ),
+          boxShadow: selected
+              ? [
+            BoxShadow(
+              color: const Color(0xFF6574FF).withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: selected ? Colors.white : const Color(0xFFBFD0FF),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              count == null || count == 0 ? name : '$name ($count)',
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.white.withOpacity(0.78),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -1225,11 +1304,4 @@ class _EmptyView extends StatelessWidget {
       ],
     );
   }
-}
-
-class _ComicCategory {
-  final String name;
-  final IconData icon;
-
-  const _ComicCategory(this.name, this.icon);
 }

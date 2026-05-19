@@ -36,6 +36,7 @@ class RankingService {
       queryParameters: {
         'page': page,
         'limit': limit,
+        'preferSnapshot': false,
       },
     );
 
@@ -55,6 +56,7 @@ class RankingService {
     try {
       final data = await apiClient.get(
         ApiPaths.myRankingByType(typeCode),
+        queryParameters: const {'preferSnapshot': false},
       );
 
       if (data == null) return null;

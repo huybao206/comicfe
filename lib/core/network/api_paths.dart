@@ -13,6 +13,8 @@ class ApiPaths {
 
   // Comics
   static const String comics = '/comics';
+  static const String comicGenres = '/comics/genres';
+  static const String comicRankings = '/comics/rankings';
   static String comicDetail(int id) => '/comics/$id';
   static String followComic(int id) => '/comics/$id/follow';
   static String chaptersByComic(int comicId) => '/chapters/comic/$comicId';
