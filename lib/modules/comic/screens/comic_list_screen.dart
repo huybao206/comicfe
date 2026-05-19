@@ -141,7 +141,6 @@ class _ComicListScreenState extends State<ComicListScreen> {
                 _sectionHeader(
                   title: 'Đề cử hôm nay',
                   icon: Icons.stars_rounded,
-                  action: 'Xem thêm',
                 ),
                 const SizedBox(height: 10),
                 _horizontalComicList(recommended),
