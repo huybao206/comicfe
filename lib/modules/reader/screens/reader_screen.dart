@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../comic/model/chapter.dart';
 import '../../comic/service/comic_service.dart';
+import '../../comment/widgets/comic_comment_section.dart';
 import '../widgets/image_viewer.dart';
 
 class ReaderScreen extends StatefulWidget {
@@ -241,6 +242,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
                           childCount: chapter.images.length,
                         ),
                       ),
+                    SliverToBoxAdapter(
+                      child: ChapterCommentSection(
+                        key: ValueKey<int>(chapter.id),
+                        chapterId: chapter.id,
+                        chapterLabel:
+                        'Chương ${_formatChapterNumber(chapter.chapterNumber)}: ${chapter.title}',
+                      ),
+                    ),
                     SliverToBoxAdapter(
                       child: _chapterFooter(),
                     ),

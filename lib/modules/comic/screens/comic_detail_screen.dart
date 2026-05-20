@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../comment/provider/comment_provider.dart';
 import '../../comment/widgets/comic_comment_section.dart';
 import '../../reader/screens/reader_screen.dart';
 import '../provider/comic_provider.dart';
@@ -264,11 +265,16 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
                 ? null
                 : () {
               final first = provider.chapters.first;
-              Navigator.of(context).push(
+              Navigator.of(context)
+                  .push(
                 MaterialPageRoute(
                   builder: (_) => ReaderScreen(chapterId: first.id),
                 ),
-              );
+              )
+                  .then((_) {
+                if (!mounted) return;
+                context.read<CommentProvider>().loadComicComments(widget.comicId);
+              });
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF6574FF),
@@ -374,11 +380,16 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
                 child: ListTile(
                   dense: true,
                   onTap: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context)
+                        .push(
                       MaterialPageRoute(
                         builder: (_) => ReaderScreen(chapterId: chapter.id),
                       ),
-                    );
+                    )
+                        .then((_) {
+                      if (!mounted) return;
+                      context.read<CommentProvider>().loadComicComments(widget.comicId);
+                    });
                   },
                   title: Text(
                     'Chapter ${chapter.chapterNumber}',

@@ -24,17 +24,7 @@ class CommentService {
       },
     );
 
-    final body = Map<String, dynamic>.from(data as Map);
-    final items = body['items'] as List? ?? [];
-
-    return items
-        .whereType<Map>()
-        .map(
-          (e) => CommentItem.fromMap(
-        Map<String, dynamic>.from(e),
-      ),
-    )
-        .toList();
+    return _extractCommentList(data);
   }
 
   Future<CommentItem> createComicComment({
@@ -88,17 +78,7 @@ class CommentService {
       },
     );
 
-    final body = Map<String, dynamic>.from(data as Map);
-    final items = body['items'] as List? ?? [];
-
-    return items
-        .whereType<Map>()
-        .map(
-          (e) => CommentItem.fromMap(
-        Map<String, dynamic>.from(e),
-      ),
-    )
-        .toList();
+    return _extractCommentList(data);
   }
 
   Future<CommentItem> createChapterComment({
@@ -116,5 +96,47 @@ class CommentService {
     return CommentItem.fromMap(
       Map<String, dynamic>.from(data as Map),
     );
+  }
+
+  Future<CommentItem> replyChapterComment({
+    required int chapterId,
+    required int parentCommentId,
+    required String content,
+  }) async {
+    final data = await apiClient.post(
+      ApiPaths.comments,
+      data: {
+        'chapter_id': chapterId,
+        'parent_comment_id': parentCommentId,
+        'content': content.trim(),
+      },
+    );
+
+    return CommentItem.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  List<CommentItem> _extractCommentList(dynamic data) {
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((e) => CommentItem.fromMap(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
+    if (data is Map) {
+      final body = Map<String, dynamic>.from(data);
+      final items = body['items'] ?? body['comments'] ?? body['data'];
+
+      if (items is List) {
+        return items
+            .whereType<Map>()
+            .map((e) => CommentItem.fromMap(Map<String, dynamic>.from(e)))
+            .toList();
+      }
+    }
+
+    return const [];
   }
 }

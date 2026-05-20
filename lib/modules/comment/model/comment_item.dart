@@ -16,6 +16,8 @@ class CommentItem {
   final String username;
   final String displayName;
   final String? avatarUrl;
+  final String? chapterTitle;
+  final num? chapterNumber;
 
   final List<CommentItem> replies;
 
@@ -34,6 +36,8 @@ class CommentItem {
     required this.username,
     required this.displayName,
     required this.avatarUrl,
+    required this.chapterTitle,
+    required this.chapterNumber,
     required this.replies,
   });
 
@@ -74,6 +78,12 @@ class CommentItem {
             map['avatarUrl'])
             ?.toString(),
       ),
+      chapterTitle: _nullableText(
+        map['chapter_title'] ?? map['chapterTitle'],
+      ),
+      chapterNumber: _toNullableNum(
+        map['chapter_number'] ?? map['chapterNumber'],
+      ),
       replies: rawReplies is List
           ? rawReplies
           .whereType<Map>()
@@ -102,6 +112,8 @@ class CommentItem {
     String? username,
     String? displayName,
     String? avatarUrl,
+    String? chapterTitle,
+    num? chapterNumber,
     List<CommentItem>? replies,
   }) {
     return CommentItem(
@@ -119,6 +131,8 @@ class CommentItem {
       username: username ?? this.username,
       displayName: displayName ?? this.displayName,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      chapterTitle: chapterTitle ?? this.chapterTitle,
+      chapterNumber: chapterNumber ?? this.chapterNumber,
       replies: replies ?? this.replies,
     );
   }
@@ -159,6 +173,26 @@ class CommentItem {
     if (text.isEmpty || text == 'null') return null;
 
     return DateTime.tryParse(text);
+  }
+
+
+  static num? _toNullableNum(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value;
+
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') return null;
+
+    return num.tryParse(text);
+  }
+
+  static String? _nullableText(dynamic value) {
+    if (value == null) return null;
+
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') return null;
+
+    return text;
   }
 
   static String? _buildFullImageUrl(String? raw) {

@@ -14,34 +14,33 @@ class ShopItemDetailScreen extends StatelessWidget {
   final ShopItem item;
 
   Future<void> _handleBuy(BuildContext context) async {
-    final quantity = await showBuyItemDialog(context, item);
-
-    if (quantity == null) return;
-
     final provider = context.read<ShopProvider>();
 
-    final ok = await provider.buyItem(
-      item.id,
-      quantity: quantity,
+    final quantity = await showBuyItemDialog(
+      context,
+      item,
+      onSubmit: (quantity) async {
+        final ok = await provider.buyItem(
+          item.id,
+          quantity: quantity,
+        );
+
+        if (ok) return null;
+
+        return provider.errorMessage ?? 'Không mua được vật phẩm';
+      },
     );
 
-    if (!context.mounted) return;
+    if (quantity == null || !context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor:
-        ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(
-          ok
-              ? 'Thu nhận thành công $quantity x ${item.itemName}'
-              : provider.errorMessage ?? 'Không mua được vật phẩm',
-        ),
+        backgroundColor: const Color(0xFF2F6B3B),
+        content: Text('Thu nhận thành công $quantity x ${item.itemName}'),
       ),
     );
 
-    if (ok) {
-      Navigator.of(context).pop();
-    }
+    Navigator.of(context).pop();
   }
 
   @override

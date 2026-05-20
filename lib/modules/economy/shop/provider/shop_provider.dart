@@ -44,7 +44,7 @@ class ShopProvider extends ChangeNotifier {
       await loadShopItems();
       return true;
     } catch (e) {
-      errorMessage = _err(e);
+      errorMessage = _purchaseErr(e);
       return false;
     } finally {
       isBuying = false;
@@ -53,4 +53,24 @@ class ShopProvider extends ChangeNotifier {
   }
 
   String _err(dynamic e) => e.toString().replaceFirst('Exception: ', '');
+
+  String _purchaseErr(dynamic e) {
+    final message = _err(e).trim();
+    final lower = message.toLowerCase();
+
+    if (lower.contains('không đủ vàng') ||
+        lower.contains('khong du vang') ||
+        lower.contains('không đủ ngọc') ||
+        lower.contains('khong du ngoc') ||
+        lower.contains('không đủ premium') ||
+        lower.contains('khong du premium') ||
+        lower.contains('không đủ tiền') ||
+        lower.contains('khong du tien')) {
+      return message.startsWith('Không đủ tiền')
+          ? message
+          : 'Không đủ tiền để mua vật phẩm';
+    }
+
+    return message.isEmpty ? 'Không mua được vật phẩm' : message;
+  }
 }
