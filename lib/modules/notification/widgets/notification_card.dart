@@ -200,6 +200,9 @@ class _LeadingIcon extends StatelessWidget {
 
   IconData _iconByType(String typeCode) {
     switch (typeCode.toUpperCase()) {
+      case 'NEW_CHAPTER':
+      case 'CHAPTER':
+        return Icons.menu_book_rounded;
       case 'SYSTEM':
         return Icons.settings_suggest_rounded;
       case 'GUILD':
@@ -213,6 +216,26 @@ class _LeadingIcon extends StatelessWidget {
       default:
         return Icons.notifications_active_rounded;
     }
+  }
+}
+
+String _labelByType(String typeCode) {
+  switch (typeCode.toUpperCase()) {
+    case 'NEW_CHAPTER':
+    case 'CHAPTER':
+      return 'TRUYỆN THEO DÕI';
+    case 'GUILD':
+      return 'BANG HỘI';
+    case 'SHOP':
+      return 'SHOP';
+    case 'VIP':
+      return 'VIP';
+    case 'MISSION':
+      return 'NHIỆM VỤ';
+    case 'SYSTEM':
+      return 'HỆ THỐNG';
+    default:
+      return typeCode.toUpperCase();
   }
 }
 
@@ -233,7 +256,7 @@ class _TypeChip extends StatelessWidget {
         border: Border.all(color: const Color(0xFF6D5123)),
       ),
       child: Text(
-        typeCode.toUpperCase(),
+        _labelByType(typeCode),
         style: const TextStyle(
           color: Color(0xFFF1D494),
           fontSize: 11.5,

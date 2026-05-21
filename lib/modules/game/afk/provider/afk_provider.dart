@@ -174,6 +174,20 @@ class AfkProvider extends ChangeNotifier {
     fallback: 0,
   );
 
+  String? get bannerImageUrl {
+    final raw = findConfig('afk_banner_image_url')?.parsedValue ??
+        findConfig('afk_banner_image_url')?.configValue ??
+        findConfig('afk_image_url')?.parsedValue ??
+        findConfig('afk_image_url')?.configValue;
+
+    final value = raw?.toString().trim();
+
+    if (value == null || value.isEmpty || value == 'null') return null;
+
+    return value;
+  }
+
+
   double get commonBonusPercent => _configNumber(
     ['afk_bonus_percent'],
     fallback: 0,

@@ -8,7 +8,13 @@ class NotificationService {
   NotificationService({required this.apiClient});
 
   Future<List<NotificationItem>> getMyNotifications() async {
-    final response = await apiClient.get(ApiPaths.myNotifications);
+    final response = await apiClient.get(
+      ApiPaths.myNotifications,
+      queryParameters: const {
+        'typeCode': 'NEW_CHAPTER',
+        'followedOnly': 1,
+      },
+    );
 
     List rawList = [];
 

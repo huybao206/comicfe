@@ -162,6 +162,7 @@ class _AfkScreenState extends State<AfkScreen> {
               expPerMinute: provider.expPerMinute,
               goldPerMinute: provider.goldPerMinute,
               vipBonusPercent: provider.vipBonusPercent,
+              imageUrl: provider.bannerImageUrl,
             ),
 
             const SizedBox(height: 14),

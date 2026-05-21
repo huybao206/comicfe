@@ -11,6 +11,9 @@ class ChatService {
   final ApiClient apiClient;
 
   Future<List<ChatRoom>> getRooms() async {
+    // Lớp chặn thêm ở FE để dù BE còn dữ liệu cũ hoặc đang cache,
+    // user cũng không thấy chat bang khác.
+    final myGuildId = await _getMyActiveGuildId();
     final data = await apiClient.get(ApiPaths.chatRooms);
 
     final items = _extractList(
@@ -34,7 +37,50 @@ class ChatService {
       ),
     )
         .where((room) => room.isActive)
+        .where((room) {
+      if (!room.isGuildRoom) return true;
+      if (myGuildId == null) return false;
+      return room.linkedGuildId == myGuildId;
+    })
         .toList();
+  }
+
+  Future<int?> _getMyActiveGuildId() async {
+    try {
+      final data = await apiClient.get(ApiPaths.myGuild);
+      return _extractGuildId(data);
+    } catch (_) {
+      // Nếu user chưa vào bang hoặc API trả 404/204 thì coi như không có bang.
+      // Khi không có bang, FE sẽ ẩn toàn bộ room room_type='guild'.
+      return null;
+    }
+  }
+
+  int? _extractGuildId(dynamic data) {
+    if (data == null) return null;
+
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+
+      final directId = _toNullableInt(
+        map['guild_id'] ?? map['guildId'] ?? map['id'],
+      );
+      if (directId != null) return directId;
+
+      final guildValue = map['guild'];
+      if (guildValue is Map) {
+        final guild = Map<String, dynamic>.from(guildValue);
+        final id = _toNullableInt(guild['id'] ?? guild['guild_id'] ?? guild['guildId']);
+        if (id != null) return id;
+      }
+
+      final dataValue = map['data'];
+      if (dataValue is Map) {
+        return _extractGuildId(Map<String, dynamic>.from(dataValue));
+      }
+    }
+
+    return null;
   }
 
   Future<List<Message>> getMessages(
@@ -128,5 +174,16 @@ class ChatService {
     }
 
     return const [];
+  }
+
+  int? _toNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null' || text == '-') return null;
+
+    return int.tryParse(text) ?? double.tryParse(text)?.toInt();
   }
 }

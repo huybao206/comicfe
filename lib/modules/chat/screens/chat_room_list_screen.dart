@@ -20,7 +20,7 @@ class _ChatRoomListScreenState extends State<ChatRoomListScreen> {
   final filters = const [
     _ChatFilter('Tất cả', 'all', Icons.forum_outlined),
     _ChatFilter('Công cộng', 'public', Icons.public_rounded),
-    _ChatFilter('Bang phái', 'guild', Icons.groups_rounded),
+    _ChatFilter('Bang của tôi', 'guild', Icons.groups_rounded),
     _ChatFilter('VIP', 'vip', Icons.diamond_outlined),
     _ChatFilter('Hệ thống', 'system', Icons.campaign_outlined),
   ];
@@ -65,7 +65,7 @@ class _ChatRoomListScreenState extends State<ChatRoomListScreen> {
     if (selected != 'all') {
       result = result.where((room) {
         if (selected == 'public') {
-          return room.roomType == 'public' || room.roomType == 'world';
+          return room.isPublicRoom;
         }
 
         return room.roomType == selected;

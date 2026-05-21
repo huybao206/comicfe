@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/app_env.dart';
+
 class AfkHeader extends StatelessWidget {
   const AfkHeader({
     super.key,
@@ -7,17 +9,21 @@ class AfkHeader extends StatelessWidget {
     required this.expPerMinute,
     required this.goldPerMinute,
     required this.vipBonusPercent,
+    this.imageUrl,
   });
 
   final bool isEnabled;
   final double expPerMinute;
   final double goldPerMinute;
   final double vipBonusPercent;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedImageUrl = _resolveImageUrl(imageUrl);
+
     return Container(
-      height: 196,
+      height: 214,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: const Color(0xFF7A5A26)),
@@ -33,8 +39,8 @@ class AfkHeader extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Container(
-            decoration: const BoxDecoration(
+          const DecoratedBox(
+            decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.topRight,
                 radius: 1.25,
@@ -47,6 +53,28 @@ class AfkHeader extends StatelessWidget {
               ),
             ),
           ),
+
+          if (resolvedImageUrl != null)
+            Image.network(
+              resolvedImageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.08),
+                  const Color(0xFF0B1020).withOpacity(0.60),
+                  const Color(0xFF0B1020).withOpacity(0.96),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
           Positioned(
             top: -44,
             right: -36,
@@ -71,6 +99,7 @@ class AfkHeader extends StatelessWidget {
               ),
             ),
           ),
+
           Positioned(
             top: 18,
             left: 18,
@@ -88,6 +117,13 @@ class AfkHeader extends StatelessWidget {
                       ],
                     ),
                     borderRadius: BorderRadius.circular(23),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFD4A02F).withOpacity(0.30),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: const Icon(
                     Icons.bolt_rounded,
@@ -127,6 +163,7 @@ class AfkHeader extends StatelessWidget {
               ],
             ),
           ),
+
           Positioned(
             left: 16,
             right: 16,
@@ -164,6 +201,25 @@ class AfkHeader extends StatelessWidget {
     );
   }
 
+  String? _resolveImageUrl(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+
+    final value = raw.trim();
+
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+
+    final mediaBaseUrl = AppEnv.baseUrl.replaceFirst('/api', '');
+    final normalized = value.replaceAll('\\', '/');
+
+    if (normalized.startsWith('/')) {
+      return '$mediaBaseUrl$normalized';
+    }
+
+    return '$mediaBaseUrl/$normalized';
+  }
+
   String _format(double value) {
     if (value == value.roundToDouble()) {
       return value.toInt().toString();
@@ -190,9 +246,9 @@ class _HeaderStat extends StatelessWidget {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 9),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.24),
+        color: Colors.black.withOpacity(0.34),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.10)),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
       ),
       child: Row(
         children: [
@@ -223,7 +279,7 @@ class _HeaderStat extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.48),
+                    color: Colors.white.withOpacity(0.58),
                     fontSize: 10,
                   ),
                 ),

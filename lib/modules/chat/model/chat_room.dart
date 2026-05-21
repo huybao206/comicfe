@@ -8,6 +8,8 @@ class ChatRoom {
   final int memberCount;
   final int messageCount;
   final DateTime? lastActivityAt;
+  final int? linkedGuildId;
+  final String? guildName;
 
   const ChatRoom({
     required this.id,
@@ -19,6 +21,8 @@ class ChatRoom {
     required this.memberCount,
     required this.messageCount,
     required this.lastActivityAt,
+    this.linkedGuildId,
+    this.guildName,
   });
 
   factory ChatRoom.fromMap(Map<String, dynamic> map) {
@@ -40,7 +44,7 @@ class ChatRoom {
           map['roomType'] ??
           map['type'] ??
           map['category'] ??
-          'public')
+          'global')
           .toString(),
       description: map['description']?.toString(),
       isActive: _toBool(
@@ -50,8 +54,6 @@ class ChatRoom {
             map['status'] ??
             true,
       ),
-
-      // Đọc nhiều kiểu tên field vì admin/BE có thể đặt khác nhau.
       memberCount: _toInt(
         map['member_count'] ??
             map['memberCount'] ??
@@ -59,16 +61,9 @@ class ChatRoom {
             map['membersCount'] ??
             map['total_members'] ??
             map['totalMembers'] ??
-            map['total_member'] ??
-            map['totalMember'] ??
-            map['user_count'] ??
-            map['userCount'] ??
-            map['participants_count'] ??
-            map['participantsCount'] ??
             map['active_member_count'] ??
             map['activeMemberCount'],
       ),
-
       messageCount: _toInt(
         map['message_count'] ??
             map['messageCount'] ??
@@ -76,14 +71,9 @@ class ChatRoom {
             map['messagesCount'] ??
             map['total_messages'] ??
             map['totalMessages'] ??
-            map['total_message'] ??
-            map['totalMessage'] ??
             map['chat_message_count'] ??
-            map['chatMessageCount'] ??
-            map['msg_count'] ??
-            map['msgCount'],
+            map['chatMessageCount'],
       ),
-
       lastActivityAt: _toNullableDateTime(
         map['last_activity_at'] ??
             map['lastActivityAt'] ??
@@ -94,8 +84,16 @@ class ChatRoom {
             map['updated_at'] ??
             map['updatedAt'],
       ),
+      linkedGuildId: _toNullableInt(
+        map['linked_guild_id'] ?? map['linkedGuildId'] ?? map['guild_id'] ?? map['guildId'],
+      ),
+      guildName: (map['guild_name'] ?? map['guildName'])?.toString(),
     );
   }
+
+  bool get isGuildRoom => roomType == 'guild';
+
+  bool get isPublicRoom => roomType == 'global' || roomType == 'public' || roomType == 'world';
 
   String get displayName {
     if (roomName.trim().isNotEmpty) return roomName;
@@ -106,11 +104,14 @@ class ChatRoom {
   String get typeLabel {
     switch (roomType) {
       case 'guild':
-        return 'Bang phái';
+        return guildName != null && guildName!.trim().isNotEmpty
+            ? 'Bang phái · $guildName'
+            : 'Bang phái';
       case 'vip':
         return 'VIP';
       case 'system':
         return 'Hệ thống';
+      case 'global':
       case 'public':
       case 'world':
         return 'Công cộng';
@@ -141,6 +142,17 @@ class ChatRoom {
     if (text.isEmpty || text == 'null' || text == '-') return 0;
 
     return int.tryParse(text) ?? double.tryParse(text)?.toInt() ?? 0;
+  }
+
+  static int? _toNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null' || text == '-') return null;
+
+    return int.tryParse(text) ?? double.tryParse(text)?.toInt();
   }
 
   static bool _toBool(dynamic value) {

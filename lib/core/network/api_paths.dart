@@ -22,10 +22,17 @@ class ApiPaths {
 
   // Guild
   static const String guilds = '/guilds';
-  static String guildDetail(int id) => '/guilds/$id';
+  static const String myGuild = '/guilds/me';
+  static String guildDetail(int id) => '/guilds/$id/detail';
   static String guildMembers(int id) => '/guilds/$id/members';
   static String guildJoinRequests(int id) => '/guilds/$id/join-requests';
   static String guildDonations(int id) => '/guilds/$id/donations';
+  static String guildLeave(int id) => '/guilds/$id/leave';
+  static String guildDisband(int id) => '/guilds/$id/disband';
+  static String guildCheckin(int id) => '/guilds/$id/checkin';
+  static String guildContribute(int id) => '/guilds/$id/contribute';
+  static String guildUpdate(int id) => '/guilds/$id';
+  static String guildMemberRole(int guildId, int memberId) => '/guilds/$guildId/members/$memberId/role';
 
   // Chat
   static const String chatRooms = '/chat/rooms';

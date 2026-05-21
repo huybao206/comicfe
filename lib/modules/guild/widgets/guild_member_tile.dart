@@ -6,12 +6,20 @@ class GuildMemberTile extends StatelessWidget {
   const GuildMemberTile({
     super.key,
     required this.member,
+    this.canManageRole = false,
+    this.isSubmitting = false,
+    this.onChangeRole,
   });
 
   final GuildMember member;
+  final bool canManageRole;
+  final bool isSubmitting;
+  final ValueChanged<String>? onChangeRole;
 
   @override
   Widget build(BuildContext context) {
+    final canEditThisMember = canManageRole && !member.isLeader && onChangeRole != null;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -26,17 +34,16 @@ class GuildMemberTile extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF6574FF),
-                  Color(0xFF334CFF),
-                ],
+              gradient: LinearGradient(
+                colors: member.isLeader
+                    ? const [Color(0xFFFFD27A), Color(0xFFC0842F)]
+                    : const [Color(0xFF6574FF), Color(0xFF334CFF)],
               ),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
-              Icons.person_outline_rounded,
-              color: Colors.white,
+            child: Icon(
+              member.isLeader ? Icons.workspace_premium_rounded : Icons.person_outline_rounded,
+              color: member.isLeader ? const Color(0xFF211407) : Colors.white,
             ),
           ),
           const SizedBox(width: 12),
@@ -56,7 +63,9 @@ class GuildMemberTile extends StatelessWidget {
                 Text(
                   member.role ?? 'Thành viên',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.50),
+                    color: member.isLeader
+                        ? const Color(0xFFFFD27A)
+                        : Colors.white.withOpacity(0.50),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -83,6 +92,30 @@ class GuildMemberTile extends StatelessWidget {
                 ),
               ),
             ),
+          if (canEditThisMember) ...[
+            const SizedBox(width: 8),
+            PopupMenuButton<String>(
+              enabled: !isSubmitting,
+              tooltip: 'Nâng/hạ chức',
+              color: const Color(0xFF11182A),
+              icon: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFFFD27A)),
+              onSelected: onChangeRole,
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'vice_leader',
+                  child: Text('Phó bang', style: TextStyle(color: Color(0xFFFFE9B0))),
+                ),
+                PopupMenuItem(
+                  value: 'elder',
+                  child: Text('Trưởng lão', style: TextStyle(color: Color(0xFFFFE9B0))),
+                ),
+                PopupMenuItem(
+                  value: 'member',
+                  child: Text('Thành viên', style: TextStyle(color: Color(0xFFFFE9B0))),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/guild_provider.dart';
@@ -27,7 +28,6 @@ class _CreateGuildDialog extends StatefulWidget {
 
 class _CreateGuildDialogState extends State<_CreateGuildDialog> {
   final nameController = TextEditingController();
-  final slugController = TextEditingController();
   final descController = TextEditingController();
 
   bool isSubmitting = false;
@@ -36,22 +36,38 @@ class _CreateGuildDialogState extends State<_CreateGuildDialog> {
   @override
   void dispose() {
     nameController.dispose();
-    slugController.dispose();
     descController.dispose();
     super.dispose();
+  }
+
+  String _makeSlug(String input) {
+    var value = input.trim().toLowerCase();
+    const from = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
+    const to = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd';
+
+    for (var i = 0; i < from.length; i++) {
+      value = value.replaceAll(from[i], to[i]);
+    }
+
+    value = value
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+
+    return value.isEmpty ? 'bang-hoi-${DateTime.now().millisecondsSinceEpoch}' : value;
   }
 
   Future<void> submit() async {
     if (isSubmitting) return;
 
     final name = nameController.text.trim();
-    final slug = slugController.text.trim();
     final description = descController.text.trim();
 
-    if (name.isEmpty || slug.isEmpty) {
+    if (name.isEmpty) {
       setState(() {
-        errorText = 'Tên guild và slug là bắt buộc';
+        errorText = 'Tên bang hội là bắt buộc';
       });
+      HapticFeedback.mediumImpact();
       return;
     }
 
@@ -61,14 +77,24 @@ class _CreateGuildDialogState extends State<_CreateGuildDialog> {
     });
 
     try {
-      await widget.guildProvider.guildService.createGuild(
+      final ok = await widget.guildProvider.createGuild(
         name: name,
-        slug: slug,
-        description: description,
+        slug: _makeSlug(name),
+        description: description.isEmpty ? null : description,
       );
 
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+
+      if (ok) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+
+      setState(() {
+        isSubmitting = false;
+        errorText = widget.guildProvider.errorMessage ?? 'Tạo bang hội thất bại';
+      });
+      HapticFeedback.heavyImpact();
     } catch (error) {
       if (!mounted) return;
 
@@ -76,6 +102,7 @@ class _CreateGuildDialogState extends State<_CreateGuildDialog> {
         isSubmitting = false;
         errorText = error.toString().replaceFirst('Exception: ', '');
       });
+      HapticFeedback.heavyImpact();
     }
   }
 
@@ -85,10 +112,13 @@ class _CreateGuildDialogState extends State<_CreateGuildDialog> {
       backgroundColor: const Color(0xFF15110C),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFF8B6A2B), width: 1.2),
+        side: BorderSide(
+          color: errorText == null ? const Color(0xFF8B6A2B) : const Color(0xFFFF6B6B),
+          width: 1.2,
+        ),
       ),
       title: const Text(
-        'Tạo Guild',
+        'Tạo bang hội',
         style: TextStyle(
           color: Color(0xFFF6E7BE),
           fontWeight: FontWeight.w800,
@@ -100,12 +130,7 @@ class _CreateGuildDialogState extends State<_CreateGuildDialog> {
           children: [
             _GuildInput(
               controller: nameController,
-              label: 'Tên guild',
-            ),
-            const SizedBox(height: 12),
-            _GuildInput(
-              controller: slugController,
-              label: 'Slug',
+              label: 'Tên bang hội',
             ),
             const SizedBox(height: 12),
             _GuildInput(
@@ -113,13 +138,32 @@ class _CreateGuildDialogState extends State<_CreateGuildDialog> {
               label: 'Mô tả',
               maxLines: 3,
             ),
+            const SizedBox(height: 10),
+            Text(
+              'Slug sẽ được tạo tự động. Nếu đủ cấp và đủ vàng, sau khi tạo bạn sẽ vào thẳng hồ sơ bang hội.',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.52),
+                fontSize: 12.2,
+                height: 1.35,
+              ),
+            ),
             if (errorText != null) ...[
               const SizedBox(height: 12),
-              Text(
-                errorText!,
-                style: const TextStyle(
-                  color: Color(0xFFFFB4A9),
-                  fontSize: 13,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3A1414),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.55)),
+                ),
+                child: Text(
+                  errorText!,
+                  style: const TextStyle(
+                    color: Color(0xFFFFD1D1),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
