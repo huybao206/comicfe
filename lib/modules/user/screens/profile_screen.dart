@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../auth/provider/auth_provider.dart';
 import '../../vip/screens/vip_screen.dart';
+import '../../mission/screens/mission_screen.dart';
+import '../../../core/widgets/app_top_toast.dart';
 import '../provider/user_provider.dart';
 import '../widgets/profile_action_grid.dart';
 import '../widgets/profile_header.dart';
@@ -120,20 +122,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (authProvider.errorMessage != null &&
         authProvider.errorMessage!.trim().isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF7A2E2E),
-          content: Text(authProvider.errorMessage!),
-        ),
+      AppTopToast.show(
+        context,
+        authProvider.errorMessage!,
+        icon: Icons.error_outline_rounded,
+        startColor: const Color(0xFFDC2626),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Color(0xFF2F6B3B),
-        content: Text('Đã đăng xuất'),
-      ),
+    AppTopToast.show(
+      context,
+      'Đã đăng xuất',
+      icon: Icons.logout_rounded,
     );
   }
 
@@ -223,6 +224,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: const Color(0xFF4ADE80),
                     onTap: () => _openPage(
                       const InventoryScreen(),
+                    ),
+                  ),
+                  ProfileActionItemData(
+                    icon: Icons.assignment_turned_in_outlined,
+                    title: 'Nhiệm vụ',
+                    subtitle: 'Vàng, EXP và vật phẩm',
+                    color: const Color(0xFFA78BFA),
+                    onTap: () => _openPage(
+                      const MissionScreen(),
                     ),
                   ),
                 ],

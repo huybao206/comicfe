@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../modules/chat/screens/chat_room_list_screen.dart';
 import '../modules/comic/screens/comic_list_screen.dart';
+import '../modules/cultivation/screens/cultivation_screen.dart';
 import '../modules/economy/shop/screen/shop_screen.dart';
 import '../modules/game/afk/screen/afk_screen.dart';
+import '../modules/mission/screens/mission_screen.dart';
 import '../modules/guild/screens/guild_screen.dart';
 import '../modules/notification/provider/notification_provider.dart';
 import '../modules/notification/screens/notification_screen.dart';
@@ -186,6 +188,18 @@ class _MainShellState extends State<MainShell> {
             title: 'AFK',
           );
         },
+        onOpenCultivation: () {
+          _openExtraPage(
+            page: const CultivationScreen(),
+            title: 'Cảnh giới',
+          );
+        },
+        onOpenMissions: () {
+          _openExtraPage(
+            page: const MissionScreen(),
+            title: 'Nhiệm vụ',
+          );
+        },
       ),
       body: body,
       bottomNavigationBar: extraPage == null
@@ -294,6 +308,8 @@ class _AppDrawer extends StatelessWidget {
     required this.onChangeMainPage,
     required this.onOpenRanking,
     required this.onOpenAfk,
+    required this.onOpenCultivation,
+    required this.onOpenMissions,
   });
 
   final int currentIndex;
@@ -301,6 +317,8 @@ class _AppDrawer extends StatelessWidget {
   final ValueChanged<int> onChangeMainPage;
   final VoidCallback onOpenRanking;
   final VoidCallback onOpenAfk;
+  final VoidCallback onOpenCultivation;
+  final VoidCallback onOpenMissions;
 
   @override
   Widget build(BuildContext context) {
@@ -366,6 +384,24 @@ class _AppDrawer extends StatelessWidget {
                         letterSpacing: 0.4,
                       ),
                     ),
+                  ),
+                  _drawerItem(
+                    selected: false,
+                    icon: Icons.auto_awesome_outlined,
+                    selectedIcon: Icons.auto_awesome_rounded,
+                    title: 'Cảnh giới',
+                    subtitle: 'Tu luyện, đột phá và AFK hệ số',
+                    highlight: true,
+                    onTap: onOpenCultivation,
+                  ),
+                  _drawerItem(
+                    selected: false,
+                    icon: Icons.assignment_turned_in_outlined,
+                    selectedIcon: Icons.assignment_turned_in_rounded,
+                    title: 'Nhiệm vụ',
+                    subtitle: 'Nhận vàng, EXP và vật phẩm',
+                    highlight: true,
+                    onTap: onOpenMissions,
                   ),
                   _drawerItem(
                     selected: false,

@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import '../provider/guild_provider.dart';
 import '../widgets/guild_detail_header.dart';
 import '../widgets/guild_member_tile.dart';
+import '../widgets/guild_join_request_tile.dart';
 import '../widgets/guild_section_card.dart';
 import '../widgets/guild_stat_card.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class GuildDetailScreen extends StatefulWidget {
   const GuildDetailScreen({
@@ -40,7 +42,7 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
 
     final provider = context.read<GuildProvider>();
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(
@@ -55,49 +57,30 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
 
 
   Future<void> _changeGuildLogo() async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1000,
-      );
+    final pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+    );
 
-      if (!mounted) return;
+    if (pickedFile == null || !mounted) return;
 
-      if (pickedFile == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bạn chưa chọn ảnh nào')),
-        );
-        return;
-      }
+    final ok = await context.read<GuildProvider>().updateGuildLogo(
+      guildId: widget.guildId,
+      logoFile: File(pickedFile.path),
+    );
 
-      final ok = await context.read<GuildProvider>().updateGuildLogo(
-        guildId: widget.guildId,
-        logoFile: File(pickedFile.path),
-      );
+    if (!mounted) return;
 
-      if (!mounted) return;
-
-      final provider = context.read<GuildProvider>();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            ok
-                ? 'Đã cập nhật ảnh bang hội'
-                : provider.errorMessage ?? 'Không cập nhật được ảnh bang hội',
-          ),
+    final provider = context.read<GuildProvider>();
+    AppTopToast.fromSnackBar(context,
+      SnackBar(
+        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
+        content: Text(
+          ok ? 'Đã cập nhật ảnh bang hội' : (provider.errorMessage ?? 'Cập nhật ảnh bang thất bại'),
         ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi chọn ảnh: $e'),
-        ),
-      );
-    }
+      ),
+    );
   }
 
   Future<void> _editGuildProfile() async {
@@ -125,7 +108,7 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
     if (!mounted) return;
 
     final latestProvider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(ok ? 'Đã cập nhật hồ sơ bang hội' : (latestProvider.errorMessage ?? 'Cập nhật hồ sơ bang thất bại')),
@@ -174,10 +157,84 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
     if (!mounted) return;
 
     final provider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(ok ? 'Đã cập nhật chức vụ thành viên' : (provider.errorMessage ?? 'Cập nhật chức vụ thất bại')),
+      ),
+    );
+  }
+
+
+  Future<void> _kickMember({
+    required int memberId,
+    required String memberName,
+  }) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF10182B),
+        title: const Text(
+          'Kick thành viên?',
+          style: TextStyle(color: Color(0xFFFFE9B0), fontWeight: FontWeight.w900),
+        ),
+        content: Text(
+          'Bạn muốn kick $memberName khỏi bang hội?',
+          style: const TextStyle(color: Color(0xFFE9D7AE), height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+            child: const Text('Kick'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final ok = await context.read<GuildProvider>().kickMember(memberId);
+
+    if (!mounted) return;
+
+    final provider = context.read<GuildProvider>();
+    AppTopToast.fromSnackBar(context,
+      SnackBar(
+        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
+        content: Text(ok ? 'Đã kick thành viên khỏi bang' : (provider.errorMessage ?? 'Kick thành viên thất bại')),
+      ),
+    );
+  }
+
+  Future<void> _approveJoinRequest(int requestId) async {
+    final ok = await context.read<GuildProvider>().approveJoinRequest(requestId);
+
+    if (!mounted) return;
+
+    final provider = context.read<GuildProvider>();
+    AppTopToast.fromSnackBar(context,
+      SnackBar(
+        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
+        content: Text(ok ? 'Đã duyệt thành viên vào bang' : (provider.errorMessage ?? 'Duyệt đơn thất bại')),
+      ),
+    );
+  }
+
+  Future<void> _rejectJoinRequest(int requestId) async {
+    final ok = await context.read<GuildProvider>().rejectJoinRequest(requestId);
+
+    if (!mounted) return;
+
+    final provider = context.read<GuildProvider>();
+    AppTopToast.fromSnackBar(context,
+      SnackBar(
+        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
+        content: Text(ok ? 'Đã từ chối đơn xin vào bang' : (provider.errorMessage ?? 'Từ chối đơn thất bại')),
       ),
     );
   }
@@ -204,7 +261,7 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
     final reward = int.tryParse('${data?['reward_gold'] ?? data?['rewardGold'] ?? 200}') ?? 200;
     final exp = int.tryParse('${data?['guild_exp_gain'] ?? data?['guildExpGain'] ?? 50}') ?? 50;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: data != null ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(
@@ -253,7 +310,7 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
     final cost = int.tryParse('${data?['gold_cost'] ?? data?['goldCost'] ?? 200}') ?? 200;
     final exp = int.tryParse('${data?['guild_exp_gain'] ?? data?['guildExpGain'] ?? 200}') ?? 200;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: data != null ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(
@@ -299,7 +356,7 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
     if (!mounted) return;
 
     final provider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(ok ? 'Đã thoát bang hội' : (provider.errorMessage ?? 'Thoát bang thất bại')),
@@ -343,7 +400,7 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
     if (!mounted) return;
 
     final provider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
         content: Text(ok ? 'Đã xoá bang hội khỏi hệ thống' : (provider.errorMessage ?? 'Giải tán bang thất bại')),
@@ -543,6 +600,33 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 14),
+                          if (isMyGuild && guildProvider.canApproveJoin) ...[
+                            GuildSectionCard(
+                              title: 'Đơn xin vào bang',
+                              icon: Icons.how_to_reg_rounded,
+                              child: guildProvider.joinRequests.isEmpty
+                                  ? Text(
+                                'Hiện chưa có đơn xin vào bang nào đang chờ duyệt.',
+                                style: TextStyle(
+                                  color: const Color(0xFFE9D7AE).withOpacity(0.72),
+                                  height: 1.4,
+                                ),
+                              )
+                                  : Column(
+                                children: guildProvider.joinRequests
+                                    .map(
+                                      (request) => GuildJoinRequestTile(
+                                    request: request,
+                                    isSubmitting: guildProvider.isSubmitting,
+                                    onApprove: () => _approveJoinRequest(request.id),
+                                    onReject: () => _rejectJoinRequest(request.id),
+                                  ),
+                                )
+                                    .toList(),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
                           GuildSectionCard(
                             title: 'Thành viên',
                             icon: Icons.groups_rounded,
@@ -558,11 +642,16 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
                                   .map(
                                     (e) => GuildMemberTile(
                                   member: e,
-                                  canManageRole: guildProvider.isMyGuildLeader,
+                                  canManageRole: guildProvider.canPromoteMembers,
+                                  canKick: guildProvider.canManageMembers,
                                   isSubmitting: guildProvider.isSubmitting,
                                   onChangeRole: (roleCode) => _changeMemberRole(
                                     memberId: e.id,
                                     roleCode: roleCode,
+                                  ),
+                                  onKick: () => _kickMember(
+                                    memberId: e.id,
+                                    memberName: e.name,
                                   ),
                                 ),
                               )

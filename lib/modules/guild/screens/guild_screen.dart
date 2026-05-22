@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,12 +7,14 @@ import 'package:provider/provider.dart';
 
 import '../model/guild.dart';
 import '../model/guild_member.dart';
+import '../model/guild_join_request.dart';
 import '../provider/guild_provider.dart';
 import '../widgets/create_guild_dialog.dart';
 import '../widgets/guild_empty_view.dart';
 import '../widgets/guild_header.dart';
 import '../widgets/guild_list_card.dart';
 import '../widgets/guild_member_tile.dart';
+import '../widgets/guild_join_request_tile.dart';
 import '../widgets/guild_section_card.dart';
 import '../widgets/guild_stat_card.dart';
 
@@ -25,20 +28,155 @@ class GuildScreen extends StatefulWidget {
 class _GuildScreenState extends State<GuildScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
+  Timer? _joinRequestPollTimer;
+  OverlayEntry? _toastEntry;
+  Set<int> _knownPendingRequestIds = <int>{};
 
   @override
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      context.read<GuildProvider>().loadGuildHome();
+    Future.microtask(() async {
+      await _refreshGuildHome(allowJoinPing: false);
+      _startJoinRequestPolling();
     });
   }
 
   @override
   void dispose() {
+    _joinRequestPollTimer?.cancel();
+    _toastEntry?.remove();
     _searchController.dispose();
     super.dispose();
+  }
+
+
+
+  Future<void> _refreshGuildHome({bool allowJoinPing = true}) async {
+    if (!mounted) return;
+    final provider = context.read<GuildProvider>();
+    await provider.loadGuildHome();
+    if (!mounted) return;
+    _handleJoinRequestPing(provider, allowPing: allowJoinPing);
+  }
+
+  void _startJoinRequestPolling() {
+    _joinRequestPollTimer?.cancel();
+    _joinRequestPollTimer = Timer.periodic(const Duration(seconds: 8), (_) async {
+      if (!mounted) return;
+      final provider = context.read<GuildProvider>();
+      if (!provider.hasJoinedGuild || !provider.canApproveJoin || provider.isSubmitting) return;
+      await _refreshGuildHome(allowJoinPing: true);
+    });
+  }
+
+  void _handleJoinRequestPing(GuildProvider provider, {required bool allowPing}) {
+    final nextIds = provider.joinRequests
+        .where((request) => request.isPending)
+        .map((request) => request.id)
+        .where((id) => id > 0)
+        .toSet();
+
+    final hasNewRequest = nextIds.difference(_knownPendingRequestIds).isNotEmpty;
+    _knownPendingRequestIds = nextIds;
+
+    if (allowPing && provider.canApproveJoin && hasNewRequest) {
+      _showTopToast(
+        'Có đạo hữu mới gia nhập hãy xem',
+        success: true,
+        icon: Icons.notifications_active_rounded,
+      );
+    }
+  }
+
+  void _showTopToast(
+      String message, {
+        bool success = true,
+        IconData icon = Icons.check_circle_rounded,
+      }) {
+    if (!mounted) return;
+    _toastEntry?.remove();
+    _toastEntry = null;
+
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (context) {
+        final top = MediaQuery.of(context).padding.top + 12;
+        final width = MediaQuery.of(context).size.width;
+        const beginColor = Color(0xFF16A34A);
+        const endColor = Color(0xFF64748B);
+
+        return Positioned(
+          top: top,
+          right: 12,
+          width: width * 0.82,
+          child: IgnorePointer(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 5000),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                final fadeValue = value <= 0.72 ? 1.0 : ((1 - value) / 0.28).clamp(0.0, 1.0).toDouble();
+                final colorValue = (value / 0.72).clamp(0.0, 1.0).toDouble();
+                return Opacity(
+                  opacity: fadeValue,
+                  child: Transform.translate(
+                    offset: Offset(0, -10 * (1 - value)),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: Color.lerp(beginColor, endColor, colorValue),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(0.18)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: beginColor.withOpacity(0.32),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(icon, color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                message,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    _toastEntry = entry;
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 5200), () {
+      if (_toastEntry == entry) {
+        entry.remove();
+        _toastEntry = null;
+      }
+    });
   }
 
   Future<void> _openCreateGuildDialog() async {
@@ -49,14 +187,9 @@ class _GuildScreenState extends State<GuildScreen> {
     final provider = context.read<GuildProvider>();
 
     if (ok == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Color(0xFF2F6B3B),
-          content: Text('Tạo bang hội thành công'),
-        ),
-      );
+      _showTopToast('Tạo bang hội thành công', success: true);
 
-      await provider.loadGuildHome();
+      await _refreshGuildHome(allowJoinPing: false);
     }
   }
 
@@ -67,15 +200,12 @@ class _GuildScreenState extends State<GuildScreen> {
     final provider = context.read<GuildProvider>();
     final reward = int.tryParse('${data?['reward_gold'] ?? data?['rewardGold'] ?? 200}') ?? 200;
     final exp = int.tryParse('${data?['guild_exp_gain'] ?? data?['guildExpGain'] ?? 50}') ?? 50;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: data != null ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(
-          data != null
-              ? 'Điểm danh thành công: +$reward vàng, bang hội +$exp EXP'
-              : (provider.errorMessage ?? 'Điểm danh thất bại'),
-        ),
-      ),
+    _showTopToast(
+      data != null
+          ? 'Điểm danh thành công: +$reward vàng, bang hội +$exp EXP'
+          : (provider.errorMessage ?? 'Điểm danh thất bại'),
+      success: data != null,
+      icon: data != null ? Icons.event_available_rounded : Icons.error_rounded,
     );
   }
 
@@ -111,15 +241,12 @@ class _GuildScreenState extends State<GuildScreen> {
     final cost = int.tryParse('${data?['gold_cost'] ?? data?['goldCost'] ?? 200}') ?? 200;
     final exp = int.tryParse('${data?['guild_exp_gain'] ?? data?['guildExpGain'] ?? 200}') ?? 200;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: data != null ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(
-          data != null
-              ? 'Cống hiến thành công: -$cost vàng, bang hội +$exp EXP'
-              : (provider.errorMessage ?? 'Cống hiến thất bại'),
-        ),
-      ),
+    _showTopToast(
+      data != null
+          ? 'Cống hiến thành công: -$cost vàng, bang hội +$exp EXP'
+          : (provider.errorMessage ?? 'Cống hiến thất bại'),
+      success: data != null,
+      icon: data != null ? Icons.volunteer_activism_rounded : Icons.error_rounded,
     );
   }
 
@@ -151,11 +278,10 @@ class _GuildScreenState extends State<GuildScreen> {
     final ok = await context.read<GuildProvider>().leaveMyGuild();
     if (!mounted) return;
     final provider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(ok ? 'Đã thoát bang hội' : (provider.errorMessage ?? 'Thoát bang thất bại')),
-      ),
+    _showTopToast(
+      ok ? 'Đã thoát bang hội' : (provider.errorMessage ?? 'Thoát bang thất bại'),
+      success: ok,
+      icon: ok ? Icons.logout_rounded : Icons.error_rounded,
     );
   }
 
@@ -187,11 +313,10 @@ class _GuildScreenState extends State<GuildScreen> {
     final ok = await context.read<GuildProvider>().disbandMyGuild();
     if (!mounted) return;
     final provider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(ok ? 'Đã giải tán bang hội' : (provider.errorMessage ?? 'Giải tán bang thất bại')),
-      ),
+    _showTopToast(
+      ok ? 'Đã giải tán bang hội' : (provider.errorMessage ?? 'Giải tán bang thất bại'),
+      success: ok,
+      icon: ok ? Icons.delete_forever_rounded : Icons.error_rounded,
     );
   }
 
@@ -217,21 +342,17 @@ class _GuildScreenState extends State<GuildScreen> {
       if (!mounted) return;
 
       final provider = context.read<GuildProvider>();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-          content: Text(
-            ok ? 'Đã cập nhật ảnh bang hội' : (provider.errorMessage ?? 'Cập nhật ảnh bang thất bại'),
-          ),
-        ),
+      _showTopToast(
+        ok ? 'Đã cập nhật ảnh bang hội' : (provider.errorMessage ?? 'Cập nhật ảnh bang thất bại'),
+        success: ok,
+        icon: ok ? Icons.image_rounded : Icons.error_rounded,
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF7A2E2E),
-          content: Text('Lỗi chọn ảnh: $error'),
-        ),
+      _showTopToast(
+        'Lỗi chọn ảnh: $error',
+        success: false,
+        icon: Icons.error_rounded,
       );
     }
   }
@@ -261,11 +382,10 @@ class _GuildScreenState extends State<GuildScreen> {
     if (!mounted) return;
 
     final latestProvider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(ok ? 'Đã cập nhật hồ sơ bang hội' : (latestProvider.errorMessage ?? 'Cập nhật hồ sơ bang thất bại')),
-      ),
+    _showTopToast(
+      ok ? 'Đã cập nhật hồ sơ bang hội' : (latestProvider.errorMessage ?? 'Cập nhật hồ sơ bang thất bại'),
+      success: ok,
+      icon: ok ? Icons.edit_note_rounded : Icons.error_rounded,
     );
   }
 
@@ -310,11 +430,77 @@ class _GuildScreenState extends State<GuildScreen> {
     if (!mounted) return;
 
     final provider = context.read<GuildProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
-        content: Text(ok ? 'Đã cập nhật chức vụ thành viên' : (provider.errorMessage ?? 'Cập nhật chức vụ thất bại')),
+    _showTopToast(
+      ok ? 'Đã cập nhật chức vụ thành viên' : (provider.errorMessage ?? 'Cập nhật chức vụ thất bại'),
+      success: ok,
+      icon: ok ? Icons.workspace_premium_rounded : Icons.error_rounded,
+    );
+  }
+
+
+
+  Future<void> _approveJoinRequest(GuildJoinRequest request) async {
+    final ok = await context.read<GuildProvider>().approveJoinRequest(request.id);
+    if (!mounted) return;
+    final provider = context.read<GuildProvider>();
+    _knownPendingRequestIds = provider.joinRequests.map((item) => item.id).where((id) => id > 0).toSet();
+    _showTopToast(
+      ok
+          ? 'Chúc mừng kí chủ ${request.requesterName} đã gia nhập bang ${provider.myGuild?.name ?? provider.guildDetail?.name ?? ''}'
+          : (provider.errorMessage ?? 'Duyệt đơn vào bang thất bại'),
+      success: ok,
+      icon: ok ? Icons.how_to_reg_rounded : Icons.error_rounded,
+    );
+  }
+
+  Future<void> _rejectJoinRequest(GuildJoinRequest request) async {
+    final ok = await context.read<GuildProvider>().rejectJoinRequest(request.id);
+    if (!mounted) return;
+    final provider = context.read<GuildProvider>();
+    _knownPendingRequestIds = provider.joinRequests.map((item) => item.id).where((id) => id > 0).toSet();
+    _showTopToast(
+      ok ? 'Đã từ chối đơn của ${request.requesterName}' : (provider.errorMessage ?? 'Từ chối đơn thất bại'),
+      success: ok,
+      icon: ok ? Icons.person_remove_rounded : Icons.error_rounded,
+    );
+  }
+
+  Future<void> _kickMember(GuildMember member) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF10182B),
+        title: const Text(
+          'Kick thành viên khỏi bang?',
+          style: TextStyle(color: Color(0xFFFFE9B0), fontWeight: FontWeight.w900),
+        ),
+        content: Text(
+          'Bạn muốn kick ${member.name} khỏi bang?',
+          style: const TextStyle(color: Color(0xFFE9D7AE), height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+            child: const Text('Kick'),
+          ),
+        ],
       ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final ok = await context.read<GuildProvider>().kickMember(member.id);
+    if (!mounted) return;
+    final provider = context.read<GuildProvider>();
+    _showTopToast(
+      ok ? 'Đã kick ${member.name} khỏi bang' : (provider.errorMessage ?? 'Kick thành viên thất bại'),
+      success: ok,
+      icon: ok ? Icons.person_remove_alt_1_rounded : Icons.error_rounded,
     );
   }
 
@@ -370,11 +556,16 @@ class _GuildScreenState extends State<GuildScreen> {
         body: RefreshIndicator(
           color: const Color(0xFFD4A02F),
           backgroundColor: const Color(0xFF10182B),
-          onRefresh: () => context.read<GuildProvider>().loadGuildHome(),
+          onRefresh: () => _refreshGuildHome(allowJoinPing: true),
           child: _MyGuildProfileView(
             guild: guildProvider.myGuild!,
             members: guildProvider.members,
-            isLeader: guildProvider.isMyGuildLeader,
+            joinRequests: guildProvider.joinRequests,
+            isLeader: guildProvider.isMyGuildOwner,
+            canManageGuild: guildProvider.canManageGuild,
+            canApproveJoin: guildProvider.canApproveJoin,
+            canManageMembers: guildProvider.canManageMembers,
+            canPromoteMembers: guildProvider.canPromoteMembers,
             isSubmitting: guildProvider.isSubmitting,
             onCheckin: _checkinGuild,
             onContribute: _contributeGuild,
@@ -383,6 +574,9 @@ class _GuildScreenState extends State<GuildScreen> {
             onChangeLogo: _changeGuildLogo,
             onEditProfile: _editGuildProfile,
             onChangeMemberRole: _changeMemberRole,
+            onApproveJoinRequest: _approveJoinRequest,
+            onRejectJoinRequest: _rejectJoinRequest,
+            onKickMember: _kickMember,
           ),
         ),
       );
@@ -417,7 +611,7 @@ class _GuildScreenState extends State<GuildScreen> {
       body: RefreshIndicator(
         color: const Color(0xFFD4A02F),
         backgroundColor: const Color(0xFF10182B),
-        onRefresh: () => context.read<GuildProvider>().loadGuildHome(),
+        onRefresh: () => _refreshGuildHome(allowJoinPing: true),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -588,7 +782,12 @@ class _MyGuildProfileView extends StatelessWidget {
   const _MyGuildProfileView({
     required this.guild,
     required this.members,
+    required this.joinRequests,
     required this.isLeader,
+    required this.canManageGuild,
+    required this.canApproveJoin,
+    required this.canManageMembers,
+    required this.canPromoteMembers,
     required this.isSubmitting,
     required this.onCheckin,
     required this.onContribute,
@@ -597,11 +796,19 @@ class _MyGuildProfileView extends StatelessWidget {
     required this.onChangeLogo,
     required this.onEditProfile,
     required this.onChangeMemberRole,
+    required this.onApproveJoinRequest,
+    required this.onRejectJoinRequest,
+    required this.onKickMember,
   });
 
   final Guild guild;
   final List<GuildMember> members;
+  final List<GuildJoinRequest> joinRequests;
   final bool isLeader;
+  final bool canManageGuild;
+  final bool canApproveJoin;
+  final bool canManageMembers;
+  final bool canPromoteMembers;
   final bool isSubmitting;
   final VoidCallback onCheckin;
   final VoidCallback onContribute;
@@ -610,6 +817,9 @@ class _MyGuildProfileView extends StatelessWidget {
   final VoidCallback onChangeLogo;
   final VoidCallback onEditProfile;
   final void Function({required int memberId, required String roleCode}) onChangeMemberRole;
+  final void Function(GuildJoinRequest request) onApproveJoinRequest;
+  final void Function(GuildJoinRequest request) onRejectJoinRequest;
+  final void Function(GuildMember member) onKickMember;
 
   @override
   Widget build(BuildContext context) {
@@ -626,7 +836,7 @@ class _MyGuildProfileView extends StatelessWidget {
               children: [
                 _GuildCommandPanel(
                   guild: guild,
-                  isLeader: isLeader,
+                  isLeader: canManageGuild,
                   isSubmitting: isSubmitting,
                   onChangeLogo: onChangeLogo,
                   onEditProfile: onEditProfile,
@@ -640,10 +850,21 @@ class _MyGuildProfileView extends StatelessWidget {
                 const SizedBox(height: 14),
                 _GuildMemberPanel(
                   members: members,
-                  isLeader: isLeader,
+                  canManageRole: canPromoteMembers,
+                  canKick: canManageMembers,
                   isSubmitting: isSubmitting,
                   onChangeMemberRole: onChangeMemberRole,
+                  onKickMember: onKickMember,
                 ),
+                if (canApproveJoin) ...[
+                  const SizedBox(height: 14),
+                  _GuildJoinRequestPanel(
+                    requests: joinRequests,
+                    isSubmitting: isSubmitting,
+                    onApprove: onApproveJoinRequest,
+                    onReject: onRejectJoinRequest,
+                  ),
+                ],
                 const SizedBox(height: 14),
                 _MyGuildActionCard(
                   isLeader: isLeader,
@@ -988,15 +1209,19 @@ class _GuildRequirementPanel extends StatelessWidget {
 class _GuildMemberPanel extends StatelessWidget {
   const _GuildMemberPanel({
     required this.members,
-    required this.isLeader,
+    required this.canManageRole,
+    required this.canKick,
     required this.isSubmitting,
     required this.onChangeMemberRole,
+    required this.onKickMember,
   });
 
   final List<GuildMember> members;
-  final bool isLeader;
+  final bool canManageRole;
+  final bool canKick;
   final bool isSubmitting;
   final void Function({required int memberId, required String roleCode}) onChangeMemberRole;
+  final void Function(GuildMember member) onKickMember;
 
   @override
   Widget build(BuildContext context) {
@@ -1047,13 +1272,98 @@ class _GuildMemberPanel extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: GuildMemberTile(
                     member: member,
-                    canManageRole: isLeader,
+                    canManageRole: canManageRole,
+                    canKick: canKick,
                     isSubmitting: isSubmitting,
                     onChangeRole: (roleCode) => onChangeMemberRole(
                       memberId: member.id,
                       roleCode: roleCode,
                     ),
+                    onKick: () => onKickMember(member),
                   ),
+                ),
+              )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _GuildJoinRequestPanel extends StatelessWidget {
+  const _GuildJoinRequestPanel({
+    required this.requests,
+    required this.isSubmitting,
+    required this.onApprove,
+    required this.onReject,
+  });
+
+  final List<GuildJoinRequest> requests;
+  final bool isSubmitting;
+  final void Function(GuildJoinRequest request) onApprove;
+  final void Function(GuildJoinRequest request) onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    return _LuxuryPanel(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: _PanelTitle(icon: Icons.group_add_rounded, title: 'Đơn xin nhập bang'),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: requests.isEmpty
+                        ? const Color(0xFF1B2540)
+                        : const Color(0xFFD4A02F).withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: requests.isEmpty
+                          ? const Color(0xFF3E527D)
+                          : const Color(0xFFD4A02F).withOpacity(0.55),
+                    ),
+                  ),
+                  child: Text(
+                    requests.isEmpty ? '0 đơn' : '${requests.length} chờ duyệt',
+                    style: TextStyle(
+                      color: requests.isEmpty ? const Color(0xFFE9D7AE).withOpacity(0.68) : const Color(0xFFFFD27A),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (requests.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+              child: Text(
+                'Chưa có đạo hữu nào xin vào bang.',
+                style: TextStyle(
+                  color: const Color(0xFFE9D7AE).withOpacity(0.72),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: requests
+                  .map(
+                    (request) => GuildJoinRequestTile(
+                  request: request,
+                  isSubmitting: isSubmitting,
+                  onApprove: () => onApprove(request),
+                  onReject: () => onReject(request),
                 ),
               )
                   .toList(),

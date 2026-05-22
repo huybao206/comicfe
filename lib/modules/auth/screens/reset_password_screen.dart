@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../provider/auth_provider.dart';
 import '../widgets/auth_cultivation_widgets.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({
@@ -66,13 +67,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(content: Text('Đặt lại mật khẩu thành công. Hãy đăng nhập lại.')),
       );
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(error.toString().replaceFirst('Exception: ', '')),
@@ -87,12 +88,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     try {
       await context.read<AuthProvider>().authService.forgotPassword(email: widget.email);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(content: Text('Đã gửi lại mã OTP')),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(error.toString().replaceFirst('Exception: ', '')),

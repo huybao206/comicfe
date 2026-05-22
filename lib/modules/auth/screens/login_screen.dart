@@ -5,6 +5,7 @@ import '../provider/auth_provider.dart';
 import '../widgets/auth_cultivation_widgets.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(authProvider.errorMessage ?? 'Đăng nhập thất bại'),

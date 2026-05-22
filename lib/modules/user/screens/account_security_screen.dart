@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/provider/auth_provider.dart';
 import '../provider/user_provider.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class AccountSecurityScreen extends StatefulWidget {
   const AccountSecurityScreen({super.key});
@@ -90,12 +91,12 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   await context.read<AuthProvider>().authService.requestChangePasswordOtp();
                   if (!context.mounted) return;
                   setDialogState(() => otpSent = true);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  AppTopToast.fromSnackBar(context,
                     SnackBar(content: Text('Đã gửi mã OTP về email ${email.isNotEmpty ? email : 'của bạn'}')),
                   );
                 } catch (error) {
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  AppTopToast.fromSnackBar(context,
                     SnackBar(
                       backgroundColor: const Color(0xFF7A2E2E),
                       content: Text(error.toString().replaceFirst('Exception: ', '')),
@@ -118,12 +119,12 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
 
                   if (!context.mounted) return;
                   Navigator.of(dialogContext).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  AppTopToast.fromSnackBar(context,
                     const SnackBar(content: Text('Đổi mật khẩu thành công')),
                   );
                 } catch (error) {
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  AppTopToast.fromSnackBar(context,
                     SnackBar(
                       backgroundColor: const Color(0xFF7A2E2E),
                       content: Text(error.toString().replaceFirst('Exception: ', '')),

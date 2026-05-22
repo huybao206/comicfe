@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -20,7 +21,7 @@ class _SupportScreenState extends State<SupportScreen> {
   void _submit() {
     final message = _messageController.text.trim();
     if (message.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(
           backgroundColor: Color(0xFF7A2E2E),
           content: Text('Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự'),
@@ -32,7 +33,7 @@ class _SupportScreenState extends State<SupportScreen> {
     FocusScope.of(context).unfocus();
     _messageController.clear();
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: const Color(0xFF2F6B3B),
         content: Text('Đã ghi nhận phản hồi: $_topic'),

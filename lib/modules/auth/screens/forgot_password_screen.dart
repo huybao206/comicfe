@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../provider/auth_provider.dart';
 import '../widgets/auth_cultivation_widgets.dart';
 import 'reset_password_screen.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -41,7 +42,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await context.read<AuthProvider>().authService.forgotPassword(email: email);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(content: Text('Đã gửi mã OTP về email nếu tài khoản tồn tại')),
       );
 
@@ -52,7 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(error.toString().replaceFirst('Exception: ', '')),

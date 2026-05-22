@@ -5,6 +5,7 @@ import '../../comment/provider/comment_provider.dart';
 import '../../comment/widgets/comic_comment_section.dart';
 import '../../reader/screens/reader_screen.dart';
 import '../provider/comic_provider.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class ComicDetailScreen extends StatefulWidget {
   const ComicDetailScreen({
@@ -36,7 +37,7 @@ class _ComicDetailScreenState extends State<ComicDetailScreen> {
 
     final isFollowing = provider.isComicFollowed(widget.comicId);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor:
         ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),

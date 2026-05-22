@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../model/comment_item.dart';
 import '../provider/comment_provider.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class ComicCommentSection extends StatefulWidget {
   const ComicCommentSection({
@@ -59,14 +60,14 @@ class _ComicCommentSectionState extends State<ComicCommentSection> {
     if (ok) {
       _controller.clear();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(
           backgroundColor: Color(0xFF2F6B3B),
           content: Text('Đã gửi bình luận'),
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(provider.errorMessage ?? 'Không gửi được bình luận'),
@@ -472,14 +473,14 @@ class _ChapterCommentSectionState extends State<ChapterCommentSection> {
     if (ok) {
       _controller.clear();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(
           backgroundColor: Color(0xFF2F6B3B),
           content: Text('Đã gửi bình luận chương'),
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(provider.errorMessage ?? 'Không gửi được bình luận'),

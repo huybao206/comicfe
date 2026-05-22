@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../model/guild.dart';
 import '../model/guild_member.dart';
+import '../model/guild_join_request.dart';
 import '../service/guild_service.dart';
 
 class GuildProvider extends ChangeNotifier {
@@ -21,6 +22,7 @@ class GuildProvider extends ChangeNotifier {
   Guild? guildDetail;
   Guild? myGuild;
   List<GuildMember> members = [];
+  List<GuildJoinRequest> joinRequests = [];
   Map<String, dynamic>? myMembership;
   int? myGuildChatRoomId;
 
@@ -54,6 +56,42 @@ class GuildProvider extends ChangeNotifier {
         canManageGuild;
   }
 
+  bool get isMyGuildOwner {
+    final membership = myMembership;
+    if (membership == null) return false;
+
+    final roleCode = (membership['role_code'] ?? membership['roleCode'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    final roleName = (membership['role_name'] ?? membership['roleName'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    return roleCode == 'leader' ||
+        roleCode == 'owner' ||
+        roleName.contains('bang chủ');
+  }
+
+
+  Map<String, dynamic> get _permissionMap {
+    final permissions = myMembership?['permissions'];
+    if (permissions is Map) return Map<String, dynamic>.from(permissions);
+    return const {};
+  }
+
+  bool _hasPermission(String snakeKey, String camelKey) {
+    final permissions = _permissionMap;
+    final value = permissions[snakeKey] ?? permissions[camelKey];
+    return value == true || value == 1 || value?.toString() == '1';
+  }
+
+  bool get canApproveJoin => isMyGuildLeader || _hasPermission('can_approve_join', 'canApproveJoin');
+  bool get canManageMembers => isMyGuildLeader || _hasPermission('can_manage_members', 'canManageMembers');
+  bool get canPromoteMembers => isMyGuildLeader || _hasPermission('can_promote_members', 'canPromoteMembers');
+  bool get canManageGuild => isMyGuildLeader || _hasPermission('can_manage_guild', 'canManageGuild');
+
   bool isCurrentUserGuild(int guildId) {
     return myGuild != null && myGuild!.id == guildId;
   }
@@ -81,12 +119,23 @@ class GuildProvider extends ChangeNotifier {
         } catch (_) {
           members = [];
         }
+
+        if (canApproveJoin) {
+          try {
+            joinRequests = await guildService.getGuildJoinRequests(guild.id);
+          } catch (_) {
+            joinRequests = [];
+          }
+        } else {
+          joinRequests = [];
+        }
       } else {
         myGuild = null;
         guildDetail = null;
         myMembership = null;
         myGuildChatRoomId = null;
         members = [];
+        joinRequests = [];
         guilds = await guildService.getGuilds();
       }
     } catch (error) {
@@ -134,6 +183,16 @@ class GuildProvider extends ChangeNotifier {
         members = await guildService.getGuildMembers(guildId);
       } catch (_) {
         members = [];
+      }
+
+      if (canApproveJoin) {
+        try {
+          joinRequests = await guildService.getGuildJoinRequests(guildId);
+        } catch (_) {
+          joinRequests = [];
+        }
+      } else {
+        joinRequests = [];
       }
     } catch (error) {
       errorMessage = error.toString().replaceFirst('Exception: ', '');
@@ -203,6 +262,7 @@ class GuildProvider extends ChangeNotifier {
       myMembership = null;
       myGuildChatRoomId = null;
       members = [];
+      joinRequests = [];
       await loadGuildHome();
       return true;
     } catch (error) {
@@ -229,6 +289,7 @@ class GuildProvider extends ChangeNotifier {
       myMembership = null;
       myGuildChatRoomId = null;
       members = [];
+      joinRequests = [];
       await loadGuildHome();
       return true;
     } catch (error) {
@@ -384,9 +445,74 @@ class GuildProvider extends ChangeNotifier {
     }
   }
 
+
+  Future<bool> approveJoinRequest(int requestId) async {
+    final guild = myGuild ?? guildDetail;
+    if (guild == null) return false;
+
+    try {
+      isSubmitting = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await guildService.approveJoinRequest(requestId);
+      await loadGuildDetailFull(guild.id);
+      return true;
+    } catch (error) {
+      errorMessage = error.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> rejectJoinRequest(int requestId) async {
+    final guild = myGuild ?? guildDetail;
+    if (guild == null) return false;
+
+    try {
+      isSubmitting = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await guildService.rejectJoinRequest(requestId);
+      await loadGuildDetailFull(guild.id);
+      return true;
+    } catch (error) {
+      errorMessage = error.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> kickMember(int memberId) async {
+    final guild = myGuild ?? guildDetail;
+    if (guild == null) return false;
+
+    try {
+      isSubmitting = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await guildService.kickGuildMember(guildId: guild.id, memberId: memberId);
+      await loadGuildDetailFull(guild.id);
+      return true;
+    } catch (error) {
+      errorMessage = error.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
   void clearDetail() {
     guildDetail = null;
     members = [];
+    joinRequests = [];
     errorMessage = null;
     notifyListeners();
   }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../model/profile_utility_models.dart';
 import '../provider/user_provider.dart';
 import '../service/user_service.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -80,7 +81,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF2F6B3B),
           content: Text(result.summaryText),
@@ -91,7 +92,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       await _refresh();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(error.toString().replaceFirst('Exception: ', '')),

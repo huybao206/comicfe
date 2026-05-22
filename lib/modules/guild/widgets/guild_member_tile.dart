@@ -7,18 +7,23 @@ class GuildMemberTile extends StatelessWidget {
     super.key,
     required this.member,
     this.canManageRole = false,
+    this.canKick = false,
     this.isSubmitting = false,
     this.onChangeRole,
+    this.onKick,
   });
 
   final GuildMember member;
   final bool canManageRole;
+  final bool canKick;
   final bool isSubmitting;
   final ValueChanged<String>? onChangeRole;
+  final VoidCallback? onKick;
 
   @override
   Widget build(BuildContext context) {
     final canEditThisMember = canManageRole && !member.isLeader && onChangeRole != null;
+    final canKickThisMember = canKick && !member.isLeader && onKick != null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -53,6 +58,8 @@ class GuildMemberTile extends StatelessWidget {
               children: [
                 Text(
                   member.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFFFFE9B0),
                     fontWeight: FontWeight.w900,
@@ -92,27 +99,42 @@ class GuildMemberTile extends StatelessWidget {
                 ),
               ),
             ),
-          if (canEditThisMember) ...[
+          if (canEditThisMember || canKickThisMember) ...[
             const SizedBox(width: 8),
             PopupMenuButton<String>(
               enabled: !isSubmitting,
-              tooltip: 'Nâng/hạ chức',
+              tooltip: 'Quản lý thành viên',
               color: const Color(0xFF11182A),
-              icon: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFFFD27A)),
-              onSelected: onChangeRole,
-              itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: 'vice_leader',
-                  child: Text('Phó bang', style: TextStyle(color: Color(0xFFFFE9B0))),
-                ),
-                PopupMenuItem(
-                  value: 'elder',
-                  child: Text('Trưởng lão', style: TextStyle(color: Color(0xFFFFE9B0))),
-                ),
-                PopupMenuItem(
-                  value: 'member',
-                  child: Text('Thành viên', style: TextStyle(color: Color(0xFFFFE9B0))),
-                ),
+              icon: const Icon(Icons.more_vert_rounded, color: Color(0xFFFFD27A)),
+              onSelected: (value) {
+                if (value == 'kick') {
+                  onKick?.call();
+                  return;
+                }
+                onChangeRole?.call(value);
+              },
+              itemBuilder: (context) => [
+                if (canEditThisMember) ...const [
+                  PopupMenuItem(
+                    value: 'vice_leader',
+                    child: Text('Nâng thành Phó bang', style: TextStyle(color: Color(0xFFFFE9B0))),
+                  ),
+                  PopupMenuItem(
+                    value: 'elder',
+                    child: Text('Đổi thành Trưởng lão', style: TextStyle(color: Color(0xFFFFE9B0))),
+                  ),
+                  PopupMenuItem(
+                    value: 'member',
+                    child: Text('Hạ thành Thành viên', style: TextStyle(color: Color(0xFFFFE9B0))),
+                  ),
+                ],
+                if (canKickThisMember) ...const [
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'kick',
+                    child: Text('Kick khỏi bang', style: TextStyle(color: Color(0xFFFF8A8A))),
+                  ),
+                ],
               ],
             ),
           ],

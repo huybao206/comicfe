@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../model/message.dart';
 import '../provider/chat_provider.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -43,7 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageController.clear();
       _scrollToBottom();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF8B2F2F),
           content: Text(provider.errorMessage ?? 'Không gửi được tin nhắn'),

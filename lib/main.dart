@@ -29,6 +29,9 @@ import 'modules/ranking/service/ranking_service.dart';
 import 'modules/game/afk/provider/afk_provider.dart';
 import 'modules/game/afk/service/afk_service.dart';
 
+import 'modules/mission/provider/mission_provider.dart';
+import 'modules/mission/service/mission_service.dart';
+
 import 'modules/vip/provider/vip_provider.dart';
 import 'modules/vip/service/vip_service.dart';
 
@@ -94,6 +97,11 @@ void main() {
             apiClient: context.read<ApiClient>(),
           ),
         ),
+        Provider<MissionService>(
+          create: (context) => MissionService(
+            apiClient: context.read<ApiClient>(),
+          ),
+        ),
         Provider<VipService>(
           create: (context) => VipService(
             apiClient: context.read<ApiClient>(),
@@ -148,6 +156,11 @@ void main() {
         ChangeNotifierProvider<AfkProvider>(
           create: (context) => AfkProvider(
             afkService: context.read<AfkService>(),
+          ),
+        ),
+        ChangeNotifierProvider<MissionProvider>(
+          create: (context) => MissionProvider(
+            missionService: context.read<MissionService>(),
           ),
         ),
         ChangeNotifierProvider<VipProvider>(

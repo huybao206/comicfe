@@ -9,6 +9,7 @@ import '../widgets/afk_header.dart';
 import '../widgets/afk_result_card.dart';
 import '../widgets/afk_section_title.dart';
 import '../widgets/afk_session_card.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class AfkScreen extends StatefulWidget {
   const AfkScreen({super.key});
@@ -58,7 +59,7 @@ class _AfkScreenState extends State<AfkScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor:
         ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
@@ -81,7 +82,7 @@ class _AfkScreenState extends State<AfkScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor:
         ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
@@ -113,7 +114,7 @@ class _AfkScreenState extends State<AfkScreen> {
 
     final result = afkProvider.claimResult;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor:
         ok ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
@@ -138,7 +139,7 @@ class _AfkScreenState extends State<AfkScreen> {
     if (!mounted) return;
 
     if (!claimed) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(
@@ -160,7 +161,7 @@ class _AfkScreenState extends State<AfkScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor:
         started ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),

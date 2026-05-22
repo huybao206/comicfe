@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../model/shop_item.dart';
 import '../provider/shop_provider.dart';
 import '../widgets/buy_item_dialog.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class ShopItemDetailScreen extends StatelessWidget {
   const ShopItemDetailScreen({
@@ -33,7 +34,7 @@ class ShopItemDetailScreen extends StatelessWidget {
 
     if (quantity == null || !context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppTopToast.fromSnackBar(context,
       SnackBar(
         backgroundColor: const Color(0xFF2F6B3B),
         content: Text('Thu nhận thành công $quantity x ${item.itemName}'),

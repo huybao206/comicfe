@@ -1,12 +1,14 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_paths.dart';
 import '../model/profile_utility_models.dart';
 import '../model/user_profile.dart';
 
 class UserService {
-  UserService({
-    required this.apiClient,
-  });
+  UserService({required this.apiClient});
 
   final ApiClient apiClient;
 
@@ -18,8 +20,6 @@ class UserService {
         Map<String, dynamic>.from(data as Map),
       );
     } catch (_) {
-      // Nếu /profile/me lỗi do BE/DB, vẫn lấy user cơ bản từ /auth/me
-      // để màn Tôi không bị trống.
       final fallbackData = await apiClient.get(ApiPaths.me);
 
       return UserProfile.fromMap(
@@ -32,14 +32,33 @@ class UserService {
     required String displayName,
     String? bio,
     String? avatarUrl,
+    File? avatarFile,
   }) async {
-    final data = await apiClient.put(
-      ApiPaths.updateMyProfile,
-      data: {
+    dynamic payload;
+
+    if (avatarFile != null) {
+      payload = FormData.fromMap({
         'display_name': displayName.trim(),
         if (bio != null) 'bio': bio.trim(),
-        if (avatarUrl != null) 'avatar_url': avatarUrl.trim(),
-      },
+        if (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+          'avatar_url': avatarUrl.trim(),
+        'avatar_image': await MultipartFile.fromFile(
+          avatarFile.path,
+          filename: avatarFile.path.split(Platform.pathSeparator).last,
+        ),
+      });
+    } else {
+      payload = {
+        'display_name': displayName.trim(),
+        if (bio != null) 'bio': bio.trim(),
+        if (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+          'avatar_url': avatarUrl.trim(),
+      };
+    }
+
+    final data = await apiClient.put(
+      ApiPaths.updateMyProfile,
+      data: payload,
     );
 
     return UserProfile.fromMap(

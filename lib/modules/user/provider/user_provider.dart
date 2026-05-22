@@ -1,12 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../model/user_profile.dart';
 import '../service/user_service.dart';
 
 class UserProvider extends ChangeNotifier {
-  UserProvider({
-    required this.userService,
-  });
+  UserProvider({required this.userService});
 
   final UserService userService;
 
@@ -35,6 +35,7 @@ class UserProvider extends ChangeNotifier {
     required String displayName,
     String? bio,
     String? avatarUrl,
+    File? avatarFile,
   }) async {
     final cleanDisplayName = displayName.trim();
 
@@ -53,6 +54,7 @@ class UserProvider extends ChangeNotifier {
         displayName: cleanDisplayName,
         bio: bio,
         avatarUrl: avatarUrl,
+        avatarFile: avatarFile,
       );
 
       return true;

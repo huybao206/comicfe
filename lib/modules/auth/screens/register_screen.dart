@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../provider/auth_provider.dart';
 import '../widgets/auth_cultivation_widgets.dart';
+import 'package:my_book/core/widgets/app_top_toast.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -97,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_agree) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(
           backgroundColor: Color(0xFF7A2E2E),
           content: Text('Vui lòng đồng ý điều khoản trước khi đăng ký'),
@@ -120,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         const SnackBar(
           backgroundColor: Color(0xFF2F6B3B),
           content: Text('Đăng ký thành công, đang vào app'),
@@ -129,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       Navigator.of(context).pop();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppTopToast.fromSnackBar(context,
         SnackBar(
           backgroundColor: const Color(0xFF7A2E2E),
           content: Text(authProvider.errorMessage ?? 'Đăng ký thất bại'),

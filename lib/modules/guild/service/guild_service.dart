@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_paths.dart';
 import '../model/guild.dart';
 import '../model/guild_member.dart';
+import '../model/guild_join_request.dart';
 
 class GuildService {
   GuildService({
@@ -88,6 +89,28 @@ class GuildService {
     return rawList
         .whereType<Map>()
         .map((e) => GuildMember.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+
+  Future<List<GuildJoinRequest>> getGuildJoinRequests(int guildId) async {
+    final data = await apiClient.get(ApiPaths.guildJoinRequests(guildId));
+
+    final rawList = _extractList(
+      data,
+      keys: const [
+        'items',
+        'data',
+        'rows',
+        'results',
+        'requests',
+      ],
+    );
+
+    return rawList
+        .whereType<Map>()
+        .map((e) => GuildJoinRequest.fromMap(Map<String, dynamic>.from(e)))
+        .where((request) => request.id > 0 && request.isPending)
         .toList();
   }
 
@@ -221,6 +244,25 @@ class GuildService {
     return _extractMap(data, fallbackMessage: 'Cập nhật chức vụ thành viên thất bại');
   }
 
+
+  Future<Map<String, dynamic>> approveJoinRequest(int requestId) async {
+    final data = await apiClient.post(ApiPaths.approveGuildJoinRequest(requestId));
+    return _extractMap(data, fallbackMessage: 'Duyệt đơn vào bang thất bại');
+  }
+
+  Future<Map<String, dynamic>> rejectJoinRequest(int requestId) async {
+    final data = await apiClient.post(ApiPaths.rejectGuildJoinRequest(requestId));
+    return _extractMap(data, fallbackMessage: 'Từ chối đơn vào bang thất bại');
+  }
+
+  Future<Map<String, dynamic>> kickGuildMember({
+    required int guildId,
+    required int memberId,
+  }) async {
+    final data = await apiClient.post(ApiPaths.guildMemberKick(guildId, memberId));
+    return _extractMap(data, fallbackMessage: 'Kick thành viên thất bại');
+  }
+
   Map<String, dynamic> _extractMap(
       dynamic data, {
         required String fallbackMessage,
@@ -262,6 +304,7 @@ class GuildService {
           if (nested['results'] is List) return nested['results'] as List;
           if (nested['guilds'] is List) return nested['guilds'] as List;
           if (nested['members'] is List) return nested['members'] as List;
+          if (nested['requests'] is List) return nested['requests'] as List;
         }
       }
     }
