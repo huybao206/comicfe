@@ -188,18 +188,12 @@ class _MainShellState extends State<MainShell> {
             title: 'AFK',
           );
         },
-        onOpenCultivation: () {
-          _openExtraPage(
-            page: const CultivationScreen(),
-            title: 'Cảnh giới',
-          );
-        },
         onOpenMissions: () {
           _openExtraPage(
             page: const MissionScreen(),
             title: 'Nhiệm vụ',
           );
-        },
+        }, onOpenCultivation: () {  },
       ),
       body: body,
       bottomNavigationBar: extraPage == null
@@ -385,15 +379,7 @@ class _AppDrawer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _drawerItem(
-                    selected: false,
-                    icon: Icons.auto_awesome_outlined,
-                    selectedIcon: Icons.auto_awesome_rounded,
-                    title: 'Cảnh giới',
-                    subtitle: 'Tu luyện, đột phá và AFK hệ số',
-                    highlight: true,
-                    onTap: onOpenCultivation,
-                  ),
+
                   _drawerItem(
                     selected: false,
                     icon: Icons.assignment_turned_in_outlined,

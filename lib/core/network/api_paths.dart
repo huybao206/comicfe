@@ -43,12 +43,14 @@ class ApiPaths {
   // Guild
   static const String guilds = '/guilds';
   static const String myGuild = '/guilds/me';
+
   static String guildDetail(int id) => '/guilds/$id';
   static String guildMembers(int id) => '/guilds/$id/members';
   static String guildJoinRequests(int id) => '/guilds/$id/join-requests';
   static String guildDonations(int id) => '/guilds/$id/donations';
   static String joinGuild(int id) => '/guilds/$id/join';
   static String cancelGuildJoinRequest(int id) => '/guilds/$id/join/cancel';
+
   static String guildLeave(int guildId) => '/guilds/$guildId/leave';
   static String guildDisband(int guildId) => '/guilds/$guildId/disband';
   static String guildCheckin(int guildId) => '/guilds/$guildId/checkin';
@@ -56,6 +58,7 @@ class ApiPaths {
   static String guildUpdate(int guildId) => '/guilds/$guildId';
   static String guildMemberRole(int guildId, int memberId) => '/guilds/$guildId/members/$memberId/role';
   static String guildMemberKick(int guildId, int memberId) => '/guilds/$guildId/members/$memberId/kick';
+
   static String leaveGuild(int guildId) => guildLeave(guildId);
   static String disbandGuild(int guildId) => guildDisband(guildId);
   static String checkinGuild(int guildId) => guildCheckin(guildId);
@@ -64,10 +67,12 @@ class ApiPaths {
   static String updateGuildAnnouncement(int guildId) => '/guilds/$guildId/announcement';
   static String updateGuildMemberRole(int guildId, int memberId) => guildMemberRole(guildId, memberId);
   static String kickGuildMember(int guildId, int memberId) => guildMemberKick(guildId, memberId);
+
   static String approveGuildJoinRequest(int first, [int? second]) {
     if (second == null) return '/guilds/join-requests/$first/approve';
     return '/guilds/$first/join-requests/$second/approve';
   }
+
   static String rejectGuildJoinRequest(int first, [int? second]) {
     if (second == null) return '/guilds/join-requests/$first/reject';
     return '/guilds/$first/join-requests/$second/reject';
@@ -110,8 +115,7 @@ class ApiPaths {
   static const String myInventory = '/inventory/me';
   static const String useInventoryItem = '/inventory/use';
 
-  // Other
-  static const String missions = '/missions';
+  // Checkin / Payments
   static const String checkin = '/checkin';
   static const String inventory = '/inventory';
   static const String payments = '/payments';

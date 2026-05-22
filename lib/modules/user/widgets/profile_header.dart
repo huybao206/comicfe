@@ -179,7 +179,7 @@ class ProfileHeader extends StatelessWidget {
                               'Sửa hồ sơ',
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
-                                fontSize: 12.5,
+                                fontSize: 11.5,
                               ),
                             ),
                           ),
@@ -194,8 +194,8 @@ class ProfileHeader extends StatelessWidget {
                 children: [
                   _MetaPill(
                     icon: Icons.auto_awesome_rounded,
-                    title: 'Cấp độ',
-                    value: '${profile.level}',
+                    title: 'Cảnh giới',
+                    value: profile.cultivationShortLabel,
                     color: const Color(0xFFFFD27A),
                   ),
                   const SizedBox(width: 8),
@@ -331,7 +331,7 @@ class _MetaPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        height: 52,
+        height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: Colors.black.withOpacity(0.24),
@@ -358,11 +358,11 @@ class _MetaPill extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     value,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFFFFE9B0),
-                      fontSize: 12.5,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
