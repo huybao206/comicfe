@@ -27,6 +27,13 @@ class ApiClient {
             options.headers['Authorization'] = 'Bearer $token';
           }
 
+          if (options.data is FormData) {
+            options.headers.remove(Headers.contentTypeHeader);
+            options.contentType = null;
+          } else {
+            options.headers[Headers.contentTypeHeader] = 'application/json';
+          }
+
           handler.next(options);
         },
       ),

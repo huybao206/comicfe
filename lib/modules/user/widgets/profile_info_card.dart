@@ -41,7 +41,7 @@ class ProfileInfoCard extends StatelessWidget {
                 child: _ResourceBox(
                   icon: Icons.monetization_on_outlined,
                   title: 'Vàng',
-                  value: '${profile.gold}',
+                  value: profile.goldText,
                   color: const Color(0xFFFFD27A),
                 ),
               ),

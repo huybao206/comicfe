@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/guild_provider.dart';
@@ -20,6 +23,7 @@ class GuildDetailScreen extends StatefulWidget {
 }
 
 class _GuildDetailScreenState extends State<GuildDetailScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,52 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
 
 
 
+  Future<void> _changeGuildLogo() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1000,
+      );
+
+      if (!mounted) return;
+
+      if (pickedFile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bạn chưa chọn ảnh nào')),
+        );
+        return;
+      }
+
+      final ok = await context.read<GuildProvider>().updateGuildLogo(
+        guildId: widget.guildId,
+        logoFile: File(pickedFile.path),
+      );
+
+      if (!mounted) return;
+
+      final provider = context.read<GuildProvider>();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Đã cập nhật ảnh bang hội'
+                : provider.errorMessage ?? 'Không cập nhật được ảnh bang hội',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi chọn ảnh: $e'),
+        ),
+      );
+    }
+  }
+
   Future<void> _editGuildProfile() async {
     final provider = context.read<GuildProvider>();
     final guild = provider.myGuild ?? provider.guildDetail;
@@ -64,7 +114,6 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
 
     final ok = await context.read<GuildProvider>().updateMyGuildProfile(
       name: result.name,
-      logoUrl: result.logoUrl,
       description: result.description,
       announcement: result.announcement,
       memberLimit: result.memberLimit,
@@ -356,6 +405,14 @@ class _GuildDetailScreenState extends State<GuildDetailScreen> {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+                    actions: [
+                      if (isMyGuild && guildProvider.isMyGuildLeader)
+                        IconButton(
+                          tooltip: 'Đổi ảnh bang hội',
+                          onPressed: guildProvider.isSubmitting ? null : _changeGuildLogo,
+                          icon: const Icon(Icons.photo_camera_outlined),
+                        ),
+                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       background: GuildDetailHeader(guild: guild),
                     ),
@@ -631,7 +688,6 @@ class _GuildExpProgressCard extends StatelessWidget {
 class _GuildProfileEditResult {
   const _GuildProfileEditResult({
     required this.name,
-    this.logoUrl,
     this.description,
     this.announcement,
     this.memberLimit,
@@ -641,7 +697,6 @@ class _GuildProfileEditResult {
   });
 
   final String name;
-  final String? logoUrl;
   final String? description;
   final String? announcement;
   final int? memberLimit;
@@ -661,7 +716,6 @@ class _GuildProfileEditDialog extends StatefulWidget {
 
 class _GuildProfileEditDialogState extends State<_GuildProfileEditDialog> {
   late final TextEditingController _nameController;
-  late final TextEditingController _logoController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _announcementController;
   late final TextEditingController _memberLimitController;
@@ -676,7 +730,6 @@ class _GuildProfileEditDialogState extends State<_GuildProfileEditDialog> {
     super.initState();
     final guild = widget.guild;
     _nameController = TextEditingController(text: '${guild.name ?? ''}');
-    _logoController = TextEditingController(text: '${guild.logoUrl ?? ''}');
     _descriptionController = TextEditingController(text: '${guild.description ?? ''}');
     _announcementController = TextEditingController(text: '${guild.announcement ?? ''}');
     _memberLimitController = TextEditingController(text: '${guild.memberLimit ?? 30}');
@@ -688,7 +741,6 @@ class _GuildProfileEditDialogState extends State<_GuildProfileEditDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    _logoController.dispose();
     _descriptionController.dispose();
     _announcementController.dispose();
     _memberLimitController.dispose();
@@ -727,7 +779,6 @@ class _GuildProfileEditDialogState extends State<_GuildProfileEditDialog> {
     Navigator.of(context).pop(
       _GuildProfileEditResult(
         name: name,
-        logoUrl: _nullIfBlank(_logoController.text),
         description: _nullIfBlank(_descriptionController.text),
         announcement: _nullIfBlank(_announcementController.text),
         memberLimit: memberLimit,
@@ -759,7 +810,20 @@ class _GuildProfileEditDialogState extends State<_GuildProfileEditDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _GuildEditField(controller: _nameController, label: 'Tên bang hội'),
-              _GuildEditField(controller: _logoController, label: 'Avatar/Logo bang URL'),
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF17213A),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF33446B)),
+                ),
+                child: const Text(
+                  'Ảnh bang hội được đổi trực tiếp bằng nút camera ở góc trên màn hình hồ sơ bang, không cần dán link URL.',
+                  style: TextStyle(color: Color(0xFFD8C08A), height: 1.35, fontSize: 12.5),
+                ),
+              ),
               _GuildEditField(
                 controller: _descriptionController,
                 label: 'Giới thiệu bang hội',

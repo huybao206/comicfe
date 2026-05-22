@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../model/guild.dart';
@@ -280,6 +282,37 @@ class GuildProvider extends ChangeNotifier {
     }
   }
 
+
+
+  Future<bool> updateGuildLogo({
+    required int guildId,
+    required File logoFile,
+  }) async {
+    try {
+      isSubmitting = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final updatedGuild = await guildService.updateGuildLogo(
+        guildId: guildId,
+        logoFile: logoFile,
+      );
+
+      guildDetail = updatedGuild;
+      if (myGuild?.id == guildId) {
+        myGuild = updatedGuild;
+      }
+
+      await loadGuildDetailFull(guildId);
+      return true;
+    } catch (error) {
+      errorMessage = error.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> updateMyGuildProfile({
     required String name,

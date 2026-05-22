@@ -33,18 +33,24 @@ class AfkSession {
 
   factory AfkSession.fromMap(Map<String, dynamic> map) {
     return AfkSession(
-      id: _toInt(map['id']),
-      sessionStatus: (map['session_status'] ?? 'running').toString(),
-      claimStatus: (map['claim_status'] ?? 'pending').toString(),
-      startedAt: _toDateTime(map['started_at']),
-      endedAt: _toDateTime(map['ended_at']),
-      durationSeconds: _toInt(map['duration_seconds']),
-      baseExpEarned: _toInt(map['base_exp_earned']),
-      bonusExpEarned: _toInt(map['bonus_exp_earned']),
-      totalExpEarned: _toInt(map['total_exp_earned']),
-      baseGoldEarned: _toDouble(map['base_gold_earned']),
-      bonusGoldEarned: _toDouble(map['bonus_gold_earned']),
-      totalGoldEarned: _toDouble(map['total_gold_earned']),
+      id: _toInt(_pick(map, ['id'])),
+      sessionStatus: _pick(map, ['session_status', 'sessionStatus'])
+          ?.toString() ??
+          'running',
+      claimStatus: _pick(map, ['claim_status', 'claimStatus'])
+          ?.toString() ??
+          'pending',
+      startedAt: _toDateTime(_pick(map, ['started_at', 'startedAt'])),
+      endedAt: _toDateTime(_pick(map, ['ended_at', 'endedAt'])),
+      durationSeconds: _toInt(_pick(map, ['duration_seconds', 'durationSeconds'])),
+      baseExpEarned: _toInt(_pick(map, ['base_exp_earned', 'baseExpEarned'])),
+      bonusExpEarned: _toInt(_pick(map, ['bonus_exp_earned', 'bonusExpEarned'])),
+      totalExpEarned: _toInt(_pick(map, ['total_exp_earned', 'totalExpEarned'])),
+      baseGoldEarned: _toDouble(_pick(map, ['base_gold_earned', 'baseGoldEarned'])),
+      bonusGoldEarned:
+      _toDouble(_pick(map, ['bonus_gold_earned', 'bonusGoldEarned'])),
+      totalGoldEarned:
+      _toDouble(_pick(map, ['total_gold_earned', 'totalGoldEarned'])),
     );
   }
 
@@ -53,6 +59,14 @@ class AfkSession {
   bool get isFinished => sessionStatus == 'finished';
 
   bool get canClaim => isFinished && claimStatus == 'pending';
+
+  static dynamic _pick(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      if (map.containsKey(key)) return map[key];
+    }
+
+    return null;
+  }
 
   static int _toInt(dynamic value) {
     if (value is int) return value;
@@ -73,6 +87,6 @@ class AfkSession {
 
     if (text.isEmpty || text == 'null') return null;
 
-    return DateTime.tryParse(text);
+    return DateTime.tryParse(text)?.toLocal();
   }
 }

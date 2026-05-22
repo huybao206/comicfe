@@ -4,6 +4,10 @@ class ApiPaths {
   static const String register = '/auth/register';
   static const String me = '/auth/me';
   static const String logout = '/auth/logout';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
+  static const String requestChangePasswordOtp = '/auth/change-password/request-otp';
+  static const String confirmChangePasswordOtp = '/auth/change-password/confirm-otp';
 
   // Profile
   static const String myProfile = '/profile/me';
@@ -32,6 +36,7 @@ class ApiPaths {
   static String guildCheckin(int id) => '/guilds/$id/checkin';
   static String guildContribute(int id) => '/guilds/$id/contribute';
   static String guildUpdate(int id) => '/guilds/$id';
+  static String updateGuild(int id) => '/guilds/$id';
   static String guildMemberRole(int guildId, int memberId) => '/guilds/$guildId/members/$memberId/role';
 
   // Chat
@@ -76,8 +81,7 @@ class ApiPaths {
   static String updateComment(int id) => '/comments/$id';
   static String deleteComment(int id) => '/comments/$id';
 
-  // TODO API
-
+  // Other
   static const String missions = '/missions';
   static const String checkin = '/checkin';
   static const String inventory = '/inventory';

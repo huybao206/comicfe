@@ -830,7 +830,6 @@ class _InfoRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.only(
         bottom: isLast ? 0 : 10,
-        top: isLast ? 0 : 0,
       ),
       margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
       decoration: BoxDecoration(
@@ -842,29 +841,48 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.48),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: Color(0xFFFFE9B0),
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final labelWidth = (constraints.maxWidth * 0.44).clamp(112.0, 146.0);
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: labelWidth,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.50),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      color: Color(0xFFFFE9B0),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

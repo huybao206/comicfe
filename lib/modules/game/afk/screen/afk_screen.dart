@@ -20,6 +20,10 @@ class AfkScreen extends StatefulWidget {
 class _AfkScreenState extends State<AfkScreen> {
   Timer? _timer;
 
+  int? _localRunningSessionId;
+  DateTime? _localRunningSeenAt;
+  int _localRunningBaseSeconds = 0;
+
   @override
   void initState() {
     super.initState();
@@ -122,17 +126,128 @@ class _AfkScreenState extends State<AfkScreen> {
     );
   }
 
+
+  Future<void> _claimAndContinueAfk() async {
+    final afkProvider = context.read<AfkProvider>();
+    final sessionId = afkProvider.activeSession?.id ?? 0;
+
+    if (sessionId <= 0) return;
+
+    final claimed = await afkProvider.claimSession(sessionId: sessionId);
+
+    if (!mounted) return;
+
+    if (!claimed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF7A2E2E),
+          content: Text(
+            afkProvider.errorMessage ?? 'Nhận thưởng thất bại',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final claimedExp = afkProvider.claimResult?.claimedExp ?? 0;
+    final claimedGold = afkProvider.claimResult?.claimedGold ?? 0;
+
+    await context.read<UserProvider>().loadMyProfile();
+
+    if (!mounted) return;
+
+    final started = await afkProvider.startSession();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor:
+        started ? const Color(0xFF2F6B3B) : const Color(0xFF7A2E2E),
+        content: Text(
+          started
+              ? 'Đã nhận $claimedExp EXP • ${_formatGold(claimedGold)} vàng và tiếp tục AFK'
+              : (afkProvider.errorMessage ?? 'Đã nhận thưởng nhưng chưa thể tiếp tục AFK'),
+        ),
+      ),
+    );
+  }
+
+  void _syncLocalRunningSession(AfkSession? session) {
+    if (session == null || !session.isRunning) {
+      _localRunningSessionId = null;
+      _localRunningSeenAt = null;
+      _localRunningBaseSeconds = 0;
+      return;
+    }
+
+    if (_localRunningSessionId == session.id &&
+        _localRunningSeenAt != null) {
+      return;
+    }
+
+    _localRunningSessionId = session.id;
+    _localRunningSeenAt = DateTime.now();
+    _localRunningBaseSeconds = session.durationSeconds;
+  }
+
+  int _localLiveDuration(AfkSession session) {
+    _syncLocalRunningSession(session);
+
+    final seenAt = _localRunningSeenAt;
+
+    if (seenAt == null) return session.durationSeconds;
+
+    final localElapsed = DateTime.now().difference(seenAt).inSeconds;
+    final localSeconds = _localRunningBaseSeconds +
+        (localElapsed < 0 ? 0 : localElapsed);
+
+    return _maxInt(session.durationSeconds, localSeconds);
+  }
+
   int _liveDuration(AfkSession session) {
     if (!session.isRunning) return session.durationSeconds;
 
+    final localSeconds = _localLiveDuration(session);
     final startedAt = session.startedAt;
 
-    if (startedAt == null) return session.durationSeconds;
+    if (startedAt == null) return localSeconds;
 
-    final seconds = DateTime.now().difference(startedAt).inSeconds;
+    final serverSeconds = DateTime.now().difference(startedAt).inSeconds;
 
-    return seconds < 0 ? 0 : seconds;
+    // Nếu giờ backend/DB bị lệch timezone làm startedAt nằm ở tương lai,
+    // serverSeconds sẽ âm. Khi đó vẫn dùng đồng hồ local để UI chạy ngay.
+    if (serverSeconds <= 0) return localSeconds;
+
+    return _maxInt(localSeconds, serverSeconds);
   }
+
+  int _liveExp(AfkSession session, AfkProvider provider, int seconds) {
+    if (!session.isRunning) return session.totalExpEarned;
+
+    final baseExp = (seconds / 60 * provider.expPerMinute).floor();
+    final bonusPercent =
+        provider.commonBonusPercent + provider.vipBonusPercent;
+    final bonusExp = (baseExp * bonusPercent / 100).floor();
+
+    return _maxInt(session.totalExpEarned, baseExp + bonusExp);
+  }
+
+  double _liveGold(AfkSession session, AfkProvider provider, int seconds) {
+    if (!session.isRunning) return session.totalGoldEarned;
+
+    final baseGold = seconds / 60 * provider.goldPerMinute;
+    final bonusPercent =
+        provider.commonBonusPercent + provider.vipBonusPercent;
+    final bonusGold = baseGold * bonusPercent / 100;
+    final totalGold = double.parse((baseGold + bonusGold).toStringAsFixed(2));
+
+    return _maxDouble(session.totalGoldEarned, totalGold);
+  }
+
+  int _maxInt(int a, int b) => a > b ? a : b;
+
+  double _maxDouble(double a, double b) => a > b ? a : b;
 
   String _formatGold(double value) {
     if (value == value.roundToDouble()) {
@@ -146,6 +261,16 @@ class _AfkScreenState extends State<AfkScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<AfkProvider>();
     final session = provider.activeSession;
+    _syncLocalRunningSession(session);
+
+    final liveDurationSeconds =
+    session == null ? 0 : _liveDuration(session);
+    final liveTotalExpEarned = session == null
+        ? 0
+        : _liveExp(session, provider, liveDurationSeconds);
+    final liveTotalGoldEarned = session == null
+        ? 0.0
+        : _liveGold(session, provider, liveDurationSeconds);
 
     return Scaffold(
       backgroundColor: const Color(0xFF070B14),
@@ -170,10 +295,14 @@ class _AfkScreenState extends State<AfkScreen> {
             if (session != null)
               AfkSessionCard(
                 session: session,
-                liveDurationSeconds: _liveDuration(session),
+                liveDurationSeconds: liveDurationSeconds,
+                liveTotalExpEarned: liveTotalExpEarned,
+                liveTotalGoldEarned: liveTotalGoldEarned,
                 isSubmitting: provider.isSubmitting,
                 onFinish: session.isRunning ? _finishAfk : null,
                 onClaim: session.canClaim ? _claimAfk : null,
+                onClaimAndContinue:
+                session.canClaim ? _claimAndContinueAfk : null,
               )
             else
               _StartAfkCard(
@@ -331,7 +460,9 @@ class _PolicyGrid extends StatelessWidget {
         _PolicyTile(
           icon: Icons.timer_outlined,
           label: 'Nhận từ',
-          value: '${provider.minMinutesToClaim} phút',
+          value: provider.minMinutesToClaim <= 0
+              ? 'Ngay lập tức'
+              : '${provider.minMinutesToClaim} phút',
           color: const Color(0xFF4ADE80),
         ),
         _PolicyTile(

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../provider/auth_provider.dart';
 import '../widgets/auth_cultivation_widgets.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -184,12 +185,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const Spacer(),
-                                  Text(
-                                    'Quên mật khẩu?',
-                                    style: TextStyle(
-                                      color: const Color(0xFFF8E6B5)
-                                          .withOpacity(.58),
-                                      fontSize: 13,
+                                  GestureDetector(
+                                    onTap: authProvider.isLoading
+                                        ? null
+                                        : () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const ForgotPasswordScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Quên mật khẩu?',
+                                      style: TextStyle(
+                                        color: const Color(0xFFE0B85C).withOpacity(.95),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                   ),
                                 ],

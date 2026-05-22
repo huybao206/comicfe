@@ -13,7 +13,7 @@ class UserProfile {
   final int expToNextLevel;
 
   final int coin;
-  final int gold;
+  final num gold;
   final int spiritStone;
 
   final int vipLevel;
@@ -139,7 +139,7 @@ class UserProfile {
             userMap['coin'] ??
             map['coin'],
       ),
-      gold: _toInt(
+      gold: _toNum(
         resourceMap['gold'] ??
             resourceMap['gold_balance'] ??
             resourceMap['goldBalance'] ??
@@ -244,7 +244,7 @@ class UserProfile {
     int? exp,
     int? expToNextLevel,
     int? coin,
-    int? gold,
+    num? gold,
     int? spiritStone,
     int? vipLevel,
     String? vipName,
@@ -285,6 +285,8 @@ class UserProfile {
     );
   }
 
+  String get goldText => _formatNumber(gold);
+
   double get expProgress {
     if (expToNextLevel <= 0) return 0;
     final value = exp / expToNextLevel;
@@ -299,6 +301,33 @@ class UserProfile {
     if (vipLevel <= 0) return 'Chưa kích hoạt';
     if (vipName != null && vipName!.trim().isNotEmpty) return vipName!;
     return 'VIP $vipLevel';
+  }
+
+  static num _toNum(dynamic value) {
+    if (value is int) return value;
+    if (value is double) {
+      if (value == value.roundToDouble()) return value.toInt();
+      return double.parse(value.toStringAsFixed(2));
+    }
+    if (value is num) {
+      final doubleValue = value.toDouble();
+      if (doubleValue == doubleValue.roundToDouble()) return doubleValue.toInt();
+      return double.parse(doubleValue.toStringAsFixed(2));
+    }
+
+    final parsed = double.tryParse(value?.toString() ?? '') ?? 0;
+    if (parsed == parsed.roundToDouble()) return parsed.toInt();
+    return double.parse(parsed.toStringAsFixed(2));
+  }
+
+  static String _formatNumber(num value) {
+    final doubleValue = value.toDouble();
+
+    if (doubleValue == doubleValue.roundToDouble()) {
+      return doubleValue.toInt().toString();
+    }
+
+    return doubleValue.toStringAsFixed(2);
   }
 
   static int _toInt(dynamic value) {

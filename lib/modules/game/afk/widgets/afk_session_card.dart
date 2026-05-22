@@ -7,16 +7,22 @@ class AfkSessionCard extends StatelessWidget {
     super.key,
     required this.session,
     required this.liveDurationSeconds,
+    required this.liveTotalExpEarned,
+    required this.liveTotalGoldEarned,
     required this.isSubmitting,
     required this.onFinish,
     required this.onClaim,
+    this.onClaimAndContinue,
   });
 
   final AfkSession session;
   final int liveDurationSeconds;
+  final int liveTotalExpEarned;
+  final double liveTotalGoldEarned;
   final bool isSubmitting;
   final VoidCallback? onFinish;
   final VoidCallback? onClaim;
+  final VoidCallback? onClaimAndContinue;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +105,7 @@ class AfkSessionCard extends StatelessWidget {
               Expanded(
                 child: _MetricBox(
                   label: 'Tổng EXP',
-                  value: '${session.totalExpEarned}',
+                  value: '$liveTotalExpEarned',
                   icon: Icons.auto_awesome_rounded,
                   color: const Color(0xFF4ADE80),
                 ),
@@ -108,7 +114,7 @@ class AfkSessionCard extends StatelessWidget {
               Expanded(
                 child: _MetricBox(
                   label: 'Tổng vàng',
-                  value: _formatGold(session.totalGoldEarned),
+                  value: _formatGold(liveTotalGoldEarned),
                   icon: Icons.monetization_on_outlined,
                   color: const Color(0xFFFFD27A),
                 ),
@@ -147,7 +153,9 @@ class AfkSessionCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: isSubmitting ? null : onFinish,
+                  onPressed: isSubmitting
+                      ? null
+                      : (session.isRunning ? onFinish : onClaimAndContinue),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFE9D7AE),
                     side: const BorderSide(color: Color(0xFF35466E)),
@@ -156,10 +164,14 @@ class AfkSessionCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  icon: const Icon(Icons.stop_circle_outlined),
-                  label: const Text(
-                    'Kết thúc',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                  icon: Icon(
+                    session.isRunning
+                        ? Icons.stop_circle_outlined
+                        : Icons.play_circle_outline_rounded,
+                  ),
+                  label: Text(
+                    session.isRunning ? 'Kết thúc' : 'Nhận & tiếp tục',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
               ),

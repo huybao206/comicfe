@@ -93,6 +93,82 @@ class AuthService {
     return AuthUser.fromMap(Map<String, dynamic>.from(data as Map));
   }
 
+
+  Future<void> forgotPassword({
+    required String email,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty || !cleanEmail.contains('@') || !cleanEmail.contains('.')) {
+      throw Exception('Email không hợp lệ');
+    }
+
+    await apiClient.post(
+      ApiPaths.forgotPassword,
+      data: {
+        'email': cleanEmail,
+      },
+    );
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanOtp = otp.trim();
+    final cleanPassword = newPassword.trim();
+
+    if (cleanEmail.isEmpty || !cleanEmail.contains('@') || !cleanEmail.contains('.')) {
+      throw Exception('Email không hợp lệ');
+    }
+
+    if (!RegExp(r'^\d{6}$').hasMatch(cleanOtp)) {
+      throw Exception('OTP phải gồm 6 số');
+    }
+
+    if (cleanPassword.length < 6) {
+      throw Exception('Mật khẩu mới phải từ 6 ký tự trở lên');
+    }
+
+    await apiClient.post(
+      ApiPaths.resetPassword,
+      data: {
+        'email': cleanEmail,
+        'otp': cleanOtp,
+        'newPassword': cleanPassword,
+      },
+    );
+  }
+
+  Future<void> requestChangePasswordOtp() async {
+    await apiClient.post(ApiPaths.requestChangePasswordOtp);
+  }
+
+  Future<void> confirmChangePasswordWithOtp({
+    required String otp,
+    required String newPassword,
+  }) async {
+    final cleanOtp = otp.trim();
+    final cleanPassword = newPassword.trim();
+
+    if (!RegExp(r'^\d{6}$').hasMatch(cleanOtp)) {
+      throw Exception('OTP phải gồm 6 số');
+    }
+
+    if (cleanPassword.length < 6) {
+      throw Exception('Mật khẩu mới phải từ 6 ký tự trở lên');
+    }
+
+    await apiClient.post(
+      ApiPaths.confirmChangePasswordOtp,
+      data: {
+        'otp': cleanOtp,
+        'newPassword': cleanPassword,
+      },
+    );
+  }
+
   Future<void> logout() async {
     try {
       final sessionToken = await tokenStorage.getSessionToken();

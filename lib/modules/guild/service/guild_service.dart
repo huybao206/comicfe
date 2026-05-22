@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_paths.dart';
 import '../model/guild.dart';
@@ -151,6 +155,30 @@ class GuildService {
     return _extractMap(data, fallbackMessage: 'Cống hiến bang thất bại');
   }
 
+
+
+  Future<Guild> updateGuildLogo({
+    required int guildId,
+    required File logoFile,
+  }) async {
+    final fileName = logoFile.path.split(Platform.pathSeparator).last;
+    final data = await apiClient.put(
+      ApiPaths.guildUpdate(guildId),
+      data: FormData.fromMap({
+        'logo_image': await MultipartFile.fromFile(
+          logoFile.path,
+          filename: fileName,
+        ),
+      }),
+    );
+
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      return Guild.fromMap(map['guild'] is Map ? map : {'guild': map});
+    }
+
+    throw Exception('Cập nhật ảnh bang thất bại');
+  }
 
   Future<Map<String, dynamic>> updateGuildProfile({
     required int guildId,

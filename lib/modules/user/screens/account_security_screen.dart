@@ -63,6 +63,210 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
     Navigator.of(context).maybePop();
   }
 
+  Future<void> _openChangePasswordOtpDialog() async {
+    final profile = context.read<UserProvider>().profile;
+    final email = profile?.email ?? '';
+    final otpController = TextEditingController();
+    final passwordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    bool otpSent = false;
+    bool isSendingOtp = false;
+    bool isSubmitting = false;
+    bool obscurePassword = true;
+    bool obscureConfirm = true;
+
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: !isSubmitting,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              Future<void> requestOtp() async {
+                setDialogState(() => isSendingOtp = true);
+                try {
+                  await context.read<AuthProvider>().authService.requestChangePasswordOtp();
+                  if (!context.mounted) return;
+                  setDialogState(() => otpSent = true);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đã gửi mã OTP về email ${email.isNotEmpty ? email : 'của bạn'}')),
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: const Color(0xFF7A2E2E),
+                      content: Text(error.toString().replaceFirst('Exception: ', '')),
+                    ),
+                  );
+                } finally {
+                  if (context.mounted) setDialogState(() => isSendingOtp = false);
+                }
+              }
+
+              Future<void> confirmChangePassword() async {
+                if (!formKey.currentState!.validate()) return;
+
+                setDialogState(() => isSubmitting = true);
+                try {
+                  await context.read<AuthProvider>().authService.confirmChangePasswordWithOtp(
+                    otp: otpController.text.trim(),
+                    newPassword: passwordController.text.trim(),
+                  );
+
+                  if (!context.mounted) return;
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đổi mật khẩu thành công')),
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: const Color(0xFF7A2E2E),
+                      content: Text(error.toString().replaceFirst('Exception: ', '')),
+                    ),
+                  );
+                } finally {
+                  if (context.mounted) setDialogState(() => isSubmitting = false);
+                }
+              }
+
+              return AlertDialog(
+                backgroundColor: const Color(0xFF17110C),
+                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                  side: const BorderSide(color: Color(0xFF735624)),
+                ),
+                title: const Text(
+                  'Đổi mật khẩu bằng OTP',
+                  style: TextStyle(color: Color(0xFFF6E7BE), fontWeight: FontWeight.w900),
+                ),
+                content: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            email.isNotEmpty
+                                ? 'Mã OTP sẽ được gửi về email: $email'
+                                : 'Mã OTP sẽ được gửi về email tài khoản của bạn.',
+                            style: const TextStyle(color: Color(0xFFE8D7B3), height: 1.4),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: (isSendingOtp || isSubmitting) ? null : requestOtp,
+                              icon: isSendingOtp
+                                  ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                                  : const Icon(Icons.email_rounded),
+                              label: Text(otpSent ? 'Gửi lại mã OTP' : 'Gửi mã OTP'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFC7962F),
+                                foregroundColor: const Color(0xFF24170B),
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SecurityTextField(
+                            controller: otpController,
+                            label: 'Mã OTP 6 số',
+                            icon: Icons.password_rounded,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              final text = (value ?? '').trim();
+                              if (!RegExp(r'^\d{6}$').hasMatch(text)) return 'OTP phải gồm 6 số';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _SecurityTextField(
+                            controller: passwordController,
+                            label: 'Mật khẩu mới',
+                            icon: Icons.lock_rounded,
+                            obscureText: obscurePassword,
+                            suffixIcon: IconButton(
+                              onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
+                              icon: Icon(
+                                obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                color: const Color(0xFFE0B85C),
+                              ),
+                            ),
+                            validator: (value) {
+                              final text = (value ?? '').trim();
+                              if (text.length < 6) return 'Mật khẩu mới phải từ 6 ký tự trở lên';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _SecurityTextField(
+                            controller: confirmPasswordController,
+                            label: 'Nhập lại mật khẩu mới',
+                            icon: Icons.lock_reset_rounded,
+                            obscureText: obscureConfirm,
+                            suffixIcon: IconButton(
+                              onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                              icon: Icon(
+                                obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                color: const Color(0xFFE0B85C),
+                              ),
+                            ),
+                            validator: (value) {
+                              final text = (value ?? '').trim();
+                              if (text != passwordController.text.trim()) return 'Mật khẩu nhập lại không khớp';
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+                  ),
+                  FilledButton(
+                    onPressed: isSubmitting ? null : confirmChangePassword,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFC7962F),
+                      foregroundColor: const Color(0xFF24170B),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : const Text('Xác nhận đổi', style: TextStyle(fontWeight: FontWeight.w900)),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      otpController.dispose();
+      passwordController.dispose();
+      confirmPasswordController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
@@ -132,15 +336,9 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
             const SizedBox(height: 10),
             _SecurityActionCard(
               icon: Icons.lock_reset_rounded,
-              title: 'Đổi mật khẩu',
-              subtitle: 'Backend hiện chưa có API đổi mật khẩu, cần bổ sung endpoint riêng nếu muốn dùng thật',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Chưa có API đổi mật khẩu trong backend hiện tại'),
-                  ),
-                );
-              },
+              title: 'Đổi mật khẩu bằng OTP',
+              subtitle: 'Gửi mã OTP về email, nhập mã xác nhận rồi mới đổi mật khẩu',
+              onTap: _openChangePasswordOtpDialog,
             ),
             const SizedBox(height: 18),
             OutlinedButton.icon(
@@ -248,6 +446,61 @@ class _SecurityActionCard extends StatelessWidget {
             ),
             const Icon(Icons.chevron_right_rounded, color: Color(0xFFD2B06D)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SecurityTextField extends StatelessWidget {
+  const _SecurityTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.validator,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final String? Function(String?)? validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      validator: validator,
+      style: const TextStyle(color: Color(0xFFF6E7BE), fontWeight: FontWeight.w700),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFFB89E70)),
+        prefixIcon: Icon(icon, color: const Color(0xFFE0B85C)),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: const Color(0xFF0E182C),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF2B3D6A)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFC7962F)),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFB84A4A)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFFFA0A0)),
         ),
       ),
     );

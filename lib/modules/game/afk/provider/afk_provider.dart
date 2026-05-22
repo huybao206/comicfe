@@ -195,7 +195,7 @@ class AfkProvider extends ChangeNotifier {
 
   int get minMinutesToClaim => _configNumber(
     ['afk_min_minutes_to_claim'],
-    fallback: 1,
+    fallback: 0,
   ).round();
 
   int get maxMinutesPerSession => _configNumber(
