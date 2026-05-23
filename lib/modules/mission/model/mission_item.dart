@@ -50,7 +50,8 @@ class MissionItem {
       pick('mission_id', 'missionId') ?? json['id'] ?? missionMap['id'],
     );
 
-    final statusText = (pick('status', 'status') ??
+    final statusText = (pick('mission_status', 'missionStatus') ??
+        pick('status', 'status') ??
         pick('claim_status', 'claimStatus') ??
         '')
         .toString();
@@ -80,12 +81,24 @@ class MissionItem {
       (pick('target_type', 'targetType', 'target') ?? '').toString(),
       targetValue: _toInt(pick('target_value', 'targetValue') ?? 1),
       currentProgress:
-      _toInt(pick('current_progress', 'currentProgress') ?? 0),
-      rewardGold: _toInt(pick('reward_gold', 'rewardGold') ?? 0),
-      rewardExp: _toInt(pick('reward_exp', 'rewardExp') ?? 0),
-      rewardItemId: _nullableInt(pick('reward_item_id', 'rewardItemId')),
+      _toInt(pick('current_progress', 'currentProgress') ??
+          pick('progress_value', 'progressValue') ??
+          pick('progress', 'progress') ??
+          0),
+      rewardGold: _toInt(pick('reward_gold', 'rewardGold') ??
+          _pickReward(json, 'gold') ??
+          0),
+      rewardExp: _toInt(pick('reward_exp', 'rewardExp') ??
+          _pickReward(json, 'exp') ??
+          0),
+      rewardItemId: _nullableInt(pick('reward_item_id', 'rewardItemId') ??
+          _pickReward(json, 'item_id') ??
+          _pickReward(json, 'itemId')),
       rewardItemQuantity:
-      _toInt(pick('reward_item_quantity', 'rewardItemQuantity') ?? 0),
+      _toInt(pick('reward_item_quantity', 'rewardItemQuantity') ??
+          _pickReward(json, 'item_qty') ??
+          _pickReward(json, 'itemQty') ??
+          0),
       status: statusText.isEmpty ? (claimed ? 'claimed' : 'active') : statusText,
       isClaimed: claimed,
     );
@@ -115,6 +128,14 @@ class MissionItem {
       default:
         return missionType.isEmpty ? 'Nhiệm vụ' : missionType;
     }
+  }
+
+  static dynamic _pickReward(Map<String, dynamic> json, String key) {
+    final reward = json['reward'];
+    if (reward is Map) {
+      return reward[key];
+    }
+    return null;
   }
 
   static int _toInt(dynamic value) {
